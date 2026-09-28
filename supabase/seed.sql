@@ -51,7 +51,11 @@ VALUES
     ('c0000000-0000-0000-0000-000000000001', 'pet_small', 'PET bottle up to 750 ml', 5, 15, 1, TRUE),
     ('c0000000-0000-0000-0000-000000000002', 'pet_medium', 'PET bottle 1 to 1.5 L', 8, 25, 2, TRUE),
     ('c0000000-0000-0000-0000-000000000003', 'pet_large', 'PET bottle 2 L and above', 15, 45, 3, TRUE),
-    ('c0000000-0000-0000-0000-000000000004', 'rigid_other', 'Other clean rigid plastic (HDPE/PP containers, jugs)', 10, 30, 4, TRUE)
+    ('c0000000-0000-0000-0000-000000000004', 'rigid_other', 'Other clean rigid plastic (HDPE/PP containers, jugs)', 10, 30, 4, TRUE),
+    ('c0000000-0000-0000-0000-000000000005', 'plastic_cup', 'Clean Plastic Cups & Tumblers', 5, 12, 5, TRUE),
+    ('c0000000-0000-0000-0000-000000000006', 'food_container', 'Food Containers & Meal Trays', 10, 28, 6, TRUE),
+    ('c0000000-0000-0000-0000-000000000007', 'soft_film', 'Clean Pouches & Wrappers', 4, 8, 7, TRUE),
+    ('c0000000-0000-0000-0000-000000000008', 'cutlery_rigid', 'Cutlery, Straws & Caps', 3, 6, 8, TRUE)
 ON CONFLICT (key) DO NOTHING;
 
 -- 4. Certificate Tiers

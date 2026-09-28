@@ -1,16 +1,16 @@
 'use client';
 
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import {
   Users,
   Search,
-  Award,
   CheckCircle2,
-  Mail,
   GraduationCap,
-  Sparkles,
   Download,
+  Inbox,
+  Phone,
 } from 'lucide-react';
+import { createClient } from '@/lib/supabase/client';
 
 interface StudentRosterItem {
   id: string;
@@ -18,10 +18,11 @@ interface StudentRosterItem {
   rollNo: string;
   department: string;
   year: string;
-  email: string;
+  semester?: string;
+  phone?: string;
   lifetimePoints: number;
   totalDrops: number;
-  tier: 'Bronze' | 'Silver' | 'Gold' | 'Platinum';
+  tier: 'Starter' | 'Bronze' | 'Silver' | 'Gold' | 'Platinum';
   hasConsent: boolean;
   joinedAt: string;
 }
@@ -29,107 +30,120 @@ interface StudentRosterItem {
 export default function AdminStudentsPage() {
   const [searchTerm, setSearchTerm] = useState('');
   const [selectedDept, setSelectedDept] = useState<string>('all');
+  const [students, setStudents] = useState<StudentRosterItem[]>([]);
+  const [isLoading, setIsLoading] = useState(true);
 
-  const [students] = useState<StudentRosterItem[]>([
-    {
-      id: 'stu-1',
-      name: 'Pooja Sharma',
-      rollNo: '23CS042',
-      department: 'Computer Science',
-      year: '3rd Year',
-      email: 'pooja.s@college.edu',
-      lifetimePoints: 1420,
-      totalDrops: 48,
-      tier: 'Gold',
-      hasConsent: true,
-      joinedAt: 'Aug 2026',
-    },
-    {
-      id: 'stu-2',
-      name: 'Rahul Verma',
-      rollNo: '25BT019',
-      department: 'Biotechnology',
-      year: '2nd Year',
-      email: 'rahul.v@college.edu',
-      lifetimePoints: 1180,
-      totalDrops: 36,
-      tier: 'Gold',
-      hasConsent: true,
-      joinedAt: 'Aug 2026',
-    },
-    {
-      id: 'stu-3',
-      name: 'Aakash Mehta',
-      rollNo: '22ME091',
-      department: 'Mechanical Eng',
-      year: '4th Year',
-      email: 'aakash.m@college.edu',
-      lifetimePoints: 940,
-      totalDrops: 29,
-      tier: 'Silver',
-      hasConsent: true,
-      joinedAt: 'Sep 2026',
-    },
-    {
-      id: 'stu-4',
-      name: 'Aditya Kumar',
-      rollNo: '24CS108',
-      department: 'Computer Science',
-      year: '2nd Year',
-      email: 'aditya.k@college.edu',
-      lifetimePoints: 560,
-      totalDrops: 18,
-      tier: 'Silver',
-      hasConsent: true,
-      joinedAt: 'Sep 2026',
-    },
-    {
-      id: 'stu-5',
-      name: 'Divya Patel',
-      rollNo: '23CH055',
-      department: 'Chemistry',
-      year: '3rd Year',
-      email: 'divya.p@college.edu',
-      lifetimePoints: 490,
-      totalDrops: 14,
-      tier: 'Bronze',
-      hasConsent: true,
-      joinedAt: 'Sep 2026',
-    },
-  ]);
+  useEffect(() => {
+    async function loadStudents() {
+      try {
+        const supabase = createClient();
+        const { data: dbProfiles } = await supabase
+          .from('profiles')
+          .select(`
+            id,
+            full_name,
+            first_name,
+            last_name,
+            roll_no,
+            department,
+            year,
+            semester,
+            phone,
+            consented_at,
+            created_at
+          `)
+          .eq('role', 'student')
+          .order('created_at', { ascending: false });
 
-  const filteredStudents = students.filter((s) => {
+        // Query entries count grouped by student
+        const { data: entries } = await supabase
+          .from('entries')
+          .select('student_id');
+
+        const dropCounts: Record<string, number> = {};
+        entries?.forEach((e) => {
+          dropCounts[e.student_id] = (dropCounts[e.student_id] || 0) + 1;
+        });
+
+        // Query points ledger grouped by student
+        const { data: ledger } = await supabase
+          .from('points_ledger')
+          .select('student_id, points');
+
+        const pointsMap: Record<string, number> = {};
+        ledger?.forEach((l) => {
+          pointsMap[l.student_id] = (pointsMap[l.student_id] || 0) + (l.points || 0);
+        });
+
+        if (dbProfiles && dbProfiles.length > 0) {
+          const mapped: StudentRosterItem[] = dbProfiles.map((p) => {
+            const pts = pointsMap[p.id] || 0;
+            const tier: StudentRosterItem['tier'] =
+              pts >= 2500 ? 'Platinum' : pts >= 1000 ? 'Gold' : pts >= 500 ? 'Silver' : pts >= 100 ? 'Bronze' : 'Starter';
+
+            return {
+              id: p.id,
+              name: p.full_name || `${p.first_name || ''} ${p.last_name || ''}`.trim() || 'Student',
+              rollNo: p.roll_no || 'Pending ID',
+              department: p.department || 'General',
+              year: p.year || '1st Year',
+              semester: p.semester || undefined,
+              phone: p.phone || undefined,
+              lifetimePoints: pts,
+              totalDrops: dropCounts[p.id] || 0,
+              tier,
+              hasConsent: Boolean(p.consented_at),
+              joinedAt: new Date(p.created_at).toLocaleDateString([], { month: 'short', year: 'numeric' }),
+            };
+          });
+          setStudents(mapped);
+        } else {
+          setStudents([]);
+        }
+      } catch (err) {
+        console.warn('Could not load student roster:', err);
+        setStudents([]);
+      } finally {
+        setIsLoading(false);
+      }
+    }
+
+    loadStudents();
+  }, []);
+
+  const departments = ['all', ...Array.from(new Set(students.map((s) => s.department)))];
+
+  const filtered = students.filter((s) => {
     if (selectedDept !== 'all' && s.department !== selectedDept) return false;
     if (searchTerm) {
       const q = searchTerm.toLowerCase();
       return (
         s.name.toLowerCase().includes(q) ||
         s.rollNo.toLowerCase().includes(q) ||
-        s.email.toLowerCase().includes(q)
+        s.department.toLowerCase().includes(q)
       );
     }
     return true;
   });
 
-  const departments = ['all', ...Array.from(new Set(students.map((s) => s.department)))];
-
-  const getTierBadge = (tier: StudentRosterItem['tier']) => {
+  const getTierColor = (tier: string) => {
     switch (tier) {
       case 'Platinum':
         return 'bg-purple-100 text-purple-900 border-purple-200';
       case 'Gold':
-        return 'bg-amber-100 text-amber-900 border-amber-300';
+        return 'bg-amber-100 text-amber-900 border-amber-200';
       case 'Silver':
-        return 'bg-slate-100 text-slate-800 border-slate-300';
+        return 'bg-slate-100 text-slate-900 border-slate-300';
       case 'Bronze':
+        return 'bg-amber-50 text-amber-800 border-amber-200';
       default:
-        return 'bg-orange-100 text-orange-900 border-orange-200';
+        return 'bg-surface-alt text-ink-muted border-line';
     }
   };
 
   return (
     <div className="space-y-6">
-      {/* Header */}
+      {/* Page Header */}
       <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
         <div>
           <div className="flex items-center gap-2">
@@ -137,153 +151,167 @@ export default function AdminStudentsPage() {
               <Users className="w-5 h-5" />
             </div>
             <div>
-              <h1 className="text-2xl font-black text-ink tracking-tight">Student Roster</h1>
+              <h1 className="text-2xl font-black text-ink tracking-tight">Student Roster &amp; Credits</h1>
               <p className="text-xs text-ink-muted">
-                Enrolled campus recyclers, points ledger totals, and certificate status
+                Student accounts, roll numbers, verified lifetime credits, and tier standings
               </p>
             </div>
           </div>
         </div>
 
-        <button
-          type="button"
-          onClick={() => {
-            const csv = [
-              'roll,name,department,year,email,lifetime_points,total_drops,tier',
-              ...students.map(
-                (s) =>
-                  `${s.rollNo},"${s.name}","${s.department}","${s.year}",${s.email},${s.lifetimePoints},${s.totalDrops},${s.tier}`
-              ),
-            ].join('\n');
-            const blob = new Blob([csv], { type: 'text/csv' });
-            const url = URL.createObjectURL(blob);
-            const a = document.createElement('a');
-            a.href = url;
-            a.download = `students-roster-${Date.now()}.csv`;
-            a.click();
-          }}
-          className="inline-flex items-center gap-1.5 px-3.5 py-2 rounded-xl border border-line bg-surface hover:bg-surface-alt font-bold text-xs text-ink shadow-xs"
-        >
-          <Download className="w-4 h-4 text-brand-primary-strong" />
-          <span>Export Roster (CSV)</span>
-        </button>
+        {students.length > 0 && (
+          <button
+            type="button"
+            onClick={() => {
+              const csv = [
+                'name,roll_no,department,year,points,drops,tier,joined',
+                ...students.map(
+                  (s) =>
+                    `"${s.name}",${s.rollNo},"${s.department}","${s.year}",${s.lifetimePoints},${s.totalDrops},${s.tier},"${s.joinedAt}"`
+                ),
+              ].join('\n');
+              const blob = new Blob([csv], { type: 'text/csv' });
+              const url = URL.createObjectURL(blob);
+              const a = document.createElement('a');
+              a.href = url;
+              a.download = `student-roster-${Date.now()}.csv`;
+              a.click();
+            }}
+            className="inline-flex items-center gap-1.5 px-3.5 py-2 rounded-xl border border-line bg-surface hover:bg-surface-alt font-bold text-xs text-ink shadow-xs"
+          >
+            <Download className="w-4 h-4 text-brand-primary-strong" />
+            <span>Export Roster (CSV)</span>
+          </button>
+        )}
       </div>
 
-      {/* Search and Filters */}
+      {/* Filter and Search Bar */}
       <div className="bg-surface rounded-2xl border border-line p-3 shadow-xs flex flex-col md:flex-row md:items-center justify-between gap-3">
-        {/* Search */}
-        <div className="relative flex-1">
+        <div className="flex items-center gap-2 overflow-x-auto text-xs">
+          <span className="font-bold text-ink-muted text-[11px] uppercase tracking-wider shrink-0">
+            Dept:
+          </span>
+          {departments.map((dept) => (
+            <button
+              key={dept}
+              onClick={() => setSelectedDept(dept)}
+              className={`px-3 py-1.5 rounded-full font-bold capitalize transition-colors shrink-0 ${
+                selectedDept === dept
+                  ? 'bg-brand-primary-strong text-white'
+                  : 'bg-surface border border-line text-ink-muted hover:text-ink'
+              }`}
+            >
+              {dept}
+            </button>
+          ))}
+        </div>
+
+        <div className="relative min-w-[240px]">
           <Search className="w-4 h-4 text-ink-muted absolute left-3 top-1/2 -translate-y-1/2" />
           <input
             type="text"
-            placeholder="Search by student name or roll number..."
+            placeholder="Search by student name or roll..."
             value={searchTerm}
             onChange={(e) => setSearchTerm(e.target.value)}
-            className="w-full pl-9 pr-3 py-2 rounded-xl border border-line bg-surface text-ink text-xs focus-visible:outline-2 focus-visible:outline-brand-primary-strong"
+            className="w-full pl-9 pr-3 py-1.5 rounded-xl border border-line bg-surface text-ink text-xs focus-visible:outline-2 focus-visible:outline-brand-primary-strong"
           />
-        </div>
-
-        {/* Department Filter */}
-        <div className="flex items-center gap-2">
-          <span className="text-xs font-bold text-ink-muted">Dept:</span>
-          <select
-            value={selectedDept}
-            onChange={(e) => setSelectedDept(e.target.value)}
-            className="px-3 py-2 rounded-xl border border-line bg-surface text-xs font-medium text-ink focus-visible:outline-2 focus-visible:outline-brand-primary-strong"
-          >
-            {departments.map((dept) => (
-              <option key={dept} value={dept}>
-                {dept === 'all' ? 'All Departments' : dept}
-              </option>
-            ))}
-          </select>
         </div>
       </div>
 
-      {/* Icon-Based Student Roster Cards */}
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-        {filteredStudents.map((student) => (
-          <div
-            key={student.id}
-            className="bg-surface rounded-2xl border border-line p-5 shadow-xs hover:border-brand-primary-strong/40 transition-all flex flex-col justify-between"
-          >
-            <div>
-              {/* Student Header */}
-              <div className="flex items-start justify-between gap-3">
-                <div className="flex items-center gap-3">
-                  <div className="w-12 h-12 rounded-2xl bg-brand-primary-soft text-brand-primary-strong font-black text-base flex items-center justify-center shrink-0">
-                    {student.name
-                      .split(' ')
-                      .map((n) => n[0])
-                      .join('')}
-                  </div>
+      {/* Student Cards Grid */}
+      {isLoading ? (
+        <div className="py-16 text-center text-xs text-ink-muted space-y-2">
+          <div className="w-6 h-6 rounded-full border-2 border-brand-primary-strong border-t-transparent animate-spin mx-auto" />
+          <p>Syncing student accounts...</p>
+        </div>
+      ) : filtered.length === 0 ? (
+        <div className="bg-surface rounded-2xl border border-line p-12 text-center space-y-3">
+          <div className="w-12 h-12 rounded-2xl bg-surface-alt border border-line text-brand-primary-strong mx-auto flex items-center justify-center">
+            <Inbox className="w-6 h-6 stroke-[1.5]" />
+          </div>
+          <h3 className="text-sm font-bold text-ink">No Students Registered</h3>
+          <p className="text-xs text-ink-muted max-w-sm mx-auto">
+            {students.length === 0
+              ? 'When students complete their one-time profile setup and scan bins, they will appear here.'
+              : 'No students match your active filter.'}
+          </p>
+        </div>
+      ) : (
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+          {filtered.map((student) => (
+            <div
+              key={student.id}
+              className="bg-surface rounded-2xl border border-line p-4 shadow-xs flex flex-col justify-between hover:border-brand-primary-strong/40 transition-colors"
+            >
+              <div className="space-y-3">
+                {/* Header: Name, Roll, Tier */}
+                <div className="flex items-start justify-between gap-2">
                   <div>
-                    <div className="flex items-center gap-1.5">
-                      <h2 className="font-extrabold text-sm text-ink">{student.name}</h2>
-                      <span className="font-mono text-[11px] font-bold text-ink-muted bg-surface-alt px-1.5 py-0.5 rounded border border-line">
-                        {student.rollNo}
-                      </span>
-                    </div>
+                    <h3 className="font-extrabold text-sm text-ink">{student.name}</h3>
                     <div className="flex items-center gap-1.5 text-xs text-ink-muted mt-0.5">
-                      <GraduationCap className="w-3.5 h-3.5 text-ink-muted/70" />
-                      <span>
-                        {student.department} • {student.year}
-                      </span>
+                      <GraduationCap className="w-3.5 h-3.5 text-brand-primary-strong shrink-0" />
+                      <span className="font-mono font-bold text-ink">{student.rollNo}</span>
+                      <span>•</span>
+                      <span>{student.year}</span>
                     </div>
                   </div>
+
+                  <span
+                    className={`px-2 py-0.5 rounded-full text-[10px] font-bold uppercase tracking-wider border shrink-0 ${getTierColor(
+                      student.tier
+                    )}`}
+                  >
+                    {student.tier}
+                  </span>
                 </div>
 
-                {/* Tier Badge */}
-                <span
-                  className={`text-[10px] font-black uppercase tracking-wider px-2.5 py-1 rounded-full border flex items-center gap-1 ${getTierBadge(
-                    student.tier
-                  )}`}
-                >
-                  <Award className="w-3 h-3" />
-                  <span>{student.tier}</span>
-                </span>
-              </div>
-
-              {/* Stats Strip */}
-              <div className="grid grid-cols-2 gap-2 mt-4 text-xs">
-                <div className="p-3 rounded-xl bg-surface-alt/70 border border-line/60">
-                  <span className="text-[10px] font-bold text-ink-muted uppercase tracking-wider block">
-                    Verified Points
+                {/* Dept Badge */}
+                <div className="flex flex-wrap items-center gap-1.5 text-[11px]">
+                  <span className="px-2 py-0.5 rounded-md bg-surface-alt border border-line text-ink-muted font-medium">
+                    {student.department}
                   </span>
-                  <div className="flex items-center gap-1.5 mt-0.5">
-                    <Sparkles className="w-4 h-4 text-brand-primary-strong" />
-                    <span className="text-lg font-black text-brand-primary-strong tabular-nums">
+                  {student.semester && (
+                    <span className="px-2 py-0.5 rounded-md bg-surface-alt border border-line text-ink-muted font-medium">
+                      {student.semester}
+                    </span>
+                  )}
+                  {student.phone && (
+                    <span className="inline-flex items-center gap-1 text-ink-muted">
+                      <Phone className="w-3 h-3 text-brand-primary-strong" />
+                      <span>{student.phone}</span>
+                    </span>
+                  )}
+                </div>
+
+                {/* Metrics */}
+                <div className="grid grid-cols-2 gap-2 text-center text-xs pt-1">
+                  <div className="p-2.5 rounded-xl bg-surface-alt border border-line">
+                    <span className="text-[10px] text-ink-muted font-bold block">Lifetime Credits</span>
+                    <span className="text-base font-black text-brand-primary-strong tabular-nums">
                       {student.lifetimePoints}
                     </span>
                   </div>
-                </div>
-
-                <div className="p-3 rounded-xl bg-surface-alt/70 border border-line/60">
-                  <span className="text-[10px] font-bold text-ink-muted uppercase tracking-wider block">
-                    Campus Drops
-                  </span>
-                  <div className="text-lg font-black text-ink tabular-nums mt-0.5">
-                    {student.totalDrops}
+                  <div className="p-2.5 rounded-xl bg-surface-alt border border-line">
+                    <span className="text-[10px] text-ink-muted font-bold block">Total Drops</span>
+                    <span className="text-base font-black text-ink tabular-nums">
+                      {student.totalDrops}
+                    </span>
                   </div>
                 </div>
               </div>
-            </div>
 
-            {/* Card Footer */}
-            <div className="mt-4 pt-3 border-t border-line/70 flex items-center justify-between text-xs text-ink-muted">
-              <div className="flex items-center gap-1.5 truncate max-w-[200px]">
-                <Mail className="w-3.5 h-3.5 text-ink-muted/70 shrink-0" />
-                <span className="truncate">{student.email}</span>
-              </div>
-
-              <div className="flex items-center gap-1 text-[11px] text-emerald-800 font-semibold">
-                <CheckCircle2 className="w-3.5 h-3.5" />
-                <span>DPDP 18+</span>
+              {/* Footer */}
+              <div className="mt-3 pt-2.5 border-t border-line/70 flex items-center justify-between text-[11px] text-ink-muted">
+                <div className="flex items-center gap-1 text-emerald-800 font-semibold">
+                  <CheckCircle2 className="w-3.5 h-3.5 text-emerald-700" />
+                  <span>DPDP Verified</span>
+                </div>
+                <span>Joined {student.joinedAt}</span>
               </div>
             </div>
-          </div>
-        ))}
-      </div>
+          ))}
+        </div>
+      )}
     </div>
   );
 }

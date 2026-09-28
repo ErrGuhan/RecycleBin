@@ -13,6 +13,10 @@ export const DEFAULT_PLASTIC_TYPES: PlasticTypeConfig[] = [
   { key: 'pet_small', label: 'PET bottle up to 750 ml', points_per_item: 5, avg_grams: 15 },
   { key: 'pet_medium', label: 'PET bottle 1 to 1.5 L', points_per_item: 8, avg_grams: 25 },
   { key: 'pet_large', label: 'PET bottle 2 L and above', points_per_item: 15, avg_grams: 45 },
+  { key: 'plastic_cup', label: 'Clean Plastic Cups & Tumblers', points_per_item: 5, avg_grams: 12 },
+  { key: 'food_container', label: 'Food Containers & Meal Trays', points_per_item: 10, avg_grams: 28 },
+  { key: 'soft_film', label: 'Clean Pouches & Wrappers', points_per_item: 4, avg_grams: 8 },
+  { key: 'cutlery_rigid', label: 'Cutlery, Straws & Caps', points_per_item: 3, avg_grams: 6 },
   { key: 'rigid_other', label: 'Other clean rigid plastic (HDPE/PP containers, jugs)', points_per_item: 10, avg_grams: 30 },
 ];
 

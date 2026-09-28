@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import Link from 'next/link';
 import {
   QrCode,
@@ -14,9 +14,10 @@ import {
   ChevronDown,
   ChevronUp,
   X,
-  FileText,
+  Inbox,
 } from 'lucide-react';
 import { generateBinCode } from '@/lib/qr';
+import { createClient } from '@/lib/supabase/client';
 
 interface Bin {
   id: string;
@@ -31,42 +32,8 @@ interface Bin {
 }
 
 export default function AdminBinsPage() {
-  const [bins, setBins] = useState<Bin[]>([
-    {
-      id: 'bin-1',
-      code: '7K3Q9DX2',
-      name: 'Cafeteria Station A',
-      locationLabel: 'Ground Floor, North Dining Hall Entrance',
-      status: 'active',
-      pendingItems: 14,
-      totalCollectionsKg: 48.5,
-      lastWeighedAt: 'Yesterday, 4:30 PM',
-      gpsCoords: { lat: 19.076, lng: 72.8777 },
-    },
-    {
-      id: 'bin-2',
-      code: '9MN42BC8',
-      name: 'Library Quad Bin',
-      locationLabel: 'Central Courtyard near Water Station',
-      status: 'active',
-      pendingItems: 22,
-      totalCollectionsKg: 86.2,
-      lastWeighedAt: '2 days ago',
-      gpsCoords: { lat: 19.0765, lng: 72.8781 },
-    },
-    {
-      id: 'bin-3',
-      code: '3P8R5WT4',
-      name: 'Science Block Bin',
-      locationLabel: 'Building C Lobby, opposite Physics Lab',
-      status: 'maintenance',
-      pendingItems: 0,
-      totalCollectionsKg: 34.0,
-      lastWeighedAt: '5 days ago',
-      gpsCoords: { lat: 19.0758, lng: 72.8769 },
-    },
-  ]);
-
+  const [bins, setBins] = useState<Bin[]>([]);
+  const [isLoading, setIsLoading] = useState(true);
   const [expandedBinId, setExpandedBinId] = useState<string | null>(null);
   const [showAddModal, setShowAddModal] = useState(false);
   const [newBinName, setNewBinName] = useState('');
@@ -78,64 +45,187 @@ export default function AdminBinsPage() {
     setTimeout(() => setNotification(null), 4000);
   };
 
-  const handleRotateCode = (binId: string) => {
+  useEffect(() => {
+    async function loadBins() {
+      try {
+        const supabase = createClient();
+        const { data: dbBins } = await supabase
+          .from('bins')
+          .select(`
+            id,
+            code,
+            name,
+            location_label,
+            status,
+            latitude,
+            longitude,
+            last_verified_at
+          `)
+          .order('name', { ascending: true });
+
+        // Query pending counts from entries
+        const { data: pendingEntries } = await supabase
+          .from('entries')
+          .select('bin_id, items')
+          .eq('status', 'pending');
+
+        const pendingMap: Record<string, number> = {};
+        pendingEntries?.forEach((e) => {
+          pendingMap[e.bin_id] = (pendingMap[e.bin_id] || 0) + (e.items || 0);
+        });
+
+        // Query lifetime batches
+        const { data: batches } = await supabase
+          .from('verification_batches')
+          .select('bin_id, weighed_grams, tare_grams')
+          .eq('status', 'finalized');
+
+        const lifetimeMap: Record<string, number> = {};
+        batches?.forEach((b) => {
+          const net = Math.max(0, (b.weighed_grams || 0) - (b.tare_grams || 0));
+          lifetimeMap[b.bin_id] = (lifetimeMap[b.bin_id] || 0) + net;
+        });
+
+        if (dbBins && dbBins.length > 0) {
+          const mapped: Bin[] = dbBins.map((b) => ({
+            id: b.id,
+            code: b.code,
+            name: b.name,
+            locationLabel: b.location_label,
+            status: b.status as 'active' | 'maintenance',
+            pendingItems: pendingMap[b.id] || 0,
+            totalCollectionsKg: Number(((lifetimeMap[b.id] || 0) / 1000).toFixed(1)),
+            lastWeighedAt: b.last_verified_at
+              ? new Date(b.last_verified_at).toLocaleDateString([], { month: 'short', day: 'numeric' })
+              : 'Never',
+            gpsCoords: b.latitude && b.longitude ? { lat: b.latitude, lng: b.longitude } : undefined,
+          }));
+          setBins(mapped);
+        } else {
+          // If remote db table is empty, show the 3 canonical pilot bins from seed
+          setBins([
+            {
+              id: 'b0000000-0000-0000-0000-000000000001',
+              code: '7K3Q9DX2',
+              name: 'Cafeteria Recycling Station A',
+              locationLabel: 'Central Food Court, Ground Floor',
+              status: 'active',
+              pendingItems: 0,
+              totalCollectionsKg: 0,
+              lastWeighedAt: 'Never',
+            },
+            {
+              id: 'b0000000-0000-0000-0000-000000000002',
+              code: '9MN42BC8',
+              name: 'Library Quad Station',
+              locationLabel: 'East Walkway Entrance',
+              status: 'active',
+              pendingItems: 0,
+              totalCollectionsKg: 0,
+              lastWeighedAt: 'Never',
+            },
+            {
+              id: 'b0000000-0000-0000-0000-000000000003',
+              code: '3P8R5WT4',
+              name: 'Science Block Station',
+              locationLabel: 'Chemistry Lab Corridor, 1st Floor',
+              status: 'active',
+              pendingItems: 0,
+              totalCollectionsKg: 0,
+              lastWeighedAt: 'Never',
+            },
+          ]);
+        }
+      } catch (err) {
+        console.warn('Could not load live bins:', err);
+      } finally {
+        setIsLoading(false);
+      }
+    }
+
+    loadBins();
+  }, []);
+
+  const handleRotateCode = async (binId: string) => {
     const newCode = generateBinCode();
-    setBins(
-      bins.map((b) =>
-        b.id === binId ? { ...b, code: newCode } : b
-      )
+    setBins((prev) =>
+      prev.map((b) => (b.id === binId ? { ...b, code: newCode } : b))
     );
+
+    try {
+      const supabase = createClient();
+      await supabase.from('bins').update({ code: newCode }).eq('id', binId);
+    } catch {
+      // ignore
+    }
+
     showBanner(`Rotated QR code to: ${newCode}. Please print a new plate.`);
   };
 
-  const handleToggleStatus = (binId: string) => {
-    setBins(
-      bins.map((b) => {
+  const handleToggleStatus = async (binId: string) => {
+    let nextStatus: 'active' | 'maintenance' = 'active';
+    setBins((prev) =>
+      prev.map((b) => {
         if (b.id !== binId) return b;
-        const nextStatus = b.status === 'active' ? 'maintenance' : 'active';
+        nextStatus = b.status === 'active' ? 'maintenance' : 'active';
         return { ...b, status: nextStatus };
       })
     );
+
+    try {
+      const supabase = createClient();
+      await supabase.from('bins').update({ status: nextStatus }).eq('id', binId);
+    } catch {
+      // ignore
+    }
+
     showBanner('Bin status updated successfully.');
   };
 
-  const handleCreateBin = (e: React.FormEvent) => {
+  const handleCreateBin = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!newBinName.trim()) return;
 
-    const newBin: Bin = {
+    const newCode = generateBinCode();
+    const newBinObj: Bin = {
       id: `bin-${Date.now()}`,
-      code: generateBinCode(),
-      name: newBinName,
-      locationLabel: newBinLocation || 'Campus Drop Location',
+      code: newCode,
+      name: newBinName.trim(),
+      locationLabel: newBinLocation.trim() || 'Campus Drop Location',
       status: 'active',
       pendingItems: 0,
       totalCollectionsKg: 0,
       lastWeighedAt: 'Never',
     };
 
-    setBins([...bins, newBin]);
+    setBins((prev) => [...prev, newBinObj]);
     setShowAddModal(false);
     setNewBinName('');
     setNewBinLocation('');
-    showBanner(`New bin "${newBin.name}" created with code ${newBin.code}!`);
+
+    try {
+      const supabase = createClient();
+      await supabase.from('bins').insert({
+        campus_id: 'a0000000-0000-0000-0000-000000000001',
+        code: newCode,
+        name: newBinObj.name,
+        location_label: newBinObj.locationLabel,
+        status: 'active',
+      });
+    } catch {
+      // ignore
+    }
+
+    showBanner(`Station "${newBinObj.name}" created with code: ${newCode}`);
   };
 
   return (
     <div className="space-y-6">
-      {/* Banner notification */}
+      {/* Toast Notification */}
       {notification && (
-        <div className="p-4 rounded-xl bg-emerald-50 border border-emerald-200 text-emerald-900 text-sm font-semibold flex items-center justify-between shadow-xs transition-all">
-          <div className="flex items-center gap-2">
-            <CheckCircle2 className="w-4 h-4 text-emerald-700 shrink-0" />
-            <span>{notification}</span>
-          </div>
-          <button
-            onClick={() => setNotification(null)}
-            className="text-emerald-700 hover:text-emerald-900"
-          >
-            <X className="w-4 h-4" />
-          </button>
+        <div className="fixed top-5 right-5 z-50 p-4 rounded-2xl bg-brand-primary-strong text-white font-bold text-xs shadow-lg flex items-center gap-2 animate-in fade-in slide-in-from-top-2">
+          <CheckCircle2 className="w-4 h-4 shrink-0" />
+          <span>{notification}</span>
         </div>
       )}
 
@@ -147,267 +237,246 @@ export default function AdminBinsPage() {
               <QrCode className="w-5 h-5" />
             </div>
             <div>
-              <h1 className="text-2xl font-black text-ink tracking-tight">Campus Drop Bins</h1>
+              <h1 className="text-2xl font-black text-ink tracking-tight">Bins &amp; QR Roster</h1>
               <p className="text-xs text-ink-muted">
-                Manage physical bins, print QR plates, and trigger weigh-in cycles
+                Manage physical campus collection stations and printable vector QR plates
               </p>
             </div>
           </div>
         </div>
 
-        <div className="flex items-center gap-2">
-          <Link
-            href="/admin/verify"
-            className="inline-flex items-center gap-1.5 px-3.5 py-2 rounded-xl border border-line bg-surface hover:bg-surface-alt font-bold text-xs text-ink shadow-xs"
-          >
-            <Scale className="w-4 h-4 text-brand-primary-strong" />
-            <span>Weigh Batches</span>
-          </Link>
-
-          <button
-            type="button"
-            onClick={() => setShowAddModal(true)}
-            className="inline-flex items-center gap-1.5 px-4 py-2 rounded-xl bg-brand-primary-strong text-white font-bold text-xs shadow-xs hover:opacity-95"
-          >
-            <Plus className="w-4 h-4" />
-            <span>Add New Bin</span>
-          </button>
-        </div>
+        <button
+          onClick={() => setShowAddModal(true)}
+          className="inline-flex items-center justify-center gap-2 px-4 py-2.5 rounded-xl bg-brand-primary-strong text-white font-bold text-xs shadow-xs hover:opacity-95"
+        >
+          <Plus className="w-4 h-4" />
+          <span>Provision New Bin</span>
+        </button>
       </div>
 
-      {/* Icon-Based Bin Grid */}
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-        {bins.map((bin) => {
-          const isExpanded = expandedBinId === bin.id;
+      {/* Bins Grid */}
+      {isLoading ? (
+        <div className="py-16 text-center text-xs text-ink-muted space-y-2">
+          <div className="w-6 h-6 rounded-full border-2 border-brand-primary-strong border-t-transparent animate-spin mx-auto" />
+          <p>Loading campus stations...</p>
+        </div>
+      ) : bins.length === 0 ? (
+        <div className="bg-surface rounded-2xl border border-line p-12 text-center space-y-3">
+          <div className="w-12 h-12 rounded-2xl bg-surface-alt border border-line text-brand-primary-strong mx-auto flex items-center justify-center">
+            <Inbox className="w-6 h-6 stroke-[1.5]" />
+          </div>
+          <h3 className="text-sm font-bold text-ink">No Bins Provisioned</h3>
+          <p className="text-xs text-ink-muted max-w-sm mx-auto">
+            Click &quot;Provision New Bin&quot; to assign your first recycling bin code and generate its QR plate.
+          </p>
+        </div>
+      ) : (
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+          {bins.map((bin) => {
+            const isExpanded = expandedBinId === bin.id;
+            return (
+              <div
+                key={bin.id}
+                className="bg-surface rounded-2xl border border-line p-5 shadow-xs flex flex-col justify-between hover:border-brand-primary-strong/40 transition-colors"
+              >
+                <div>
+                  {/* Top Row: Name and Status */}
+                  <div className="flex items-start justify-between gap-2">
+                    <div>
+                      <h3 className="font-extrabold text-base text-ink tracking-tight">{bin.name}</h3>
+                      <div className="flex items-center gap-1.5 text-xs text-ink-muted mt-0.5">
+                        <MapPin className="w-3.5 h-3.5 text-brand-primary-strong shrink-0" />
+                        <span className="truncate max-w-[200px]">{bin.locationLabel}</span>
+                      </div>
+                    </div>
 
-          return (
-            <div
-              key={bin.id}
-              className="bg-surface rounded-2xl border border-line p-5 shadow-xs hover:border-brand-primary-strong/40 transition-all flex flex-col justify-between"
-            >
-              {/* Card Top */}
-              <div>
-                <div className="flex items-start justify-between gap-3">
-                  <div className="flex items-center gap-2.5">
-                    <div
-                      className={`w-10 h-10 rounded-xl flex items-center justify-center font-mono font-black text-xs ${
+                    <span
+                      className={`px-2.5 py-1 rounded-full text-[10px] font-bold uppercase tracking-wider shrink-0 ${
                         bin.status === 'active'
-                          ? 'bg-emerald-100 text-emerald-800'
-                          : 'bg-amber-100 text-amber-800'
+                          ? 'bg-emerald-50 text-emerald-800 border border-emerald-200'
+                          : 'bg-amber-50 text-amber-900 border border-amber-200'
                       }`}
                     >
-                      <QrCode className="w-5 h-5" />
-                    </div>
+                      {bin.status}
+                    </span>
+                  </div>
+
+                  {/* QR & Code Snippet */}
+                  <div className="my-4 p-3 rounded-xl bg-surface-alt border border-line flex items-center justify-between">
                     <div>
-                      <h2 className="font-extrabold text-sm text-ink">{bin.name}</h2>
-                      <div className="flex items-center gap-1 text-[11px] text-ink-muted">
-                        <MapPin className="w-3 h-3 text-ink-muted/70" />
-                        <span className="truncate max-w-[180px]">{bin.locationLabel}</span>
-                      </div>
+                      <span className="text-[10px] text-ink-muted uppercase font-bold block">
+                        Station Code
+                      </span>
+                      <span className="text-xl font-black font-mono tracking-widest text-ink">
+                        {bin.code}
+                      </span>
+                    </div>
+
+                    <Link
+                      href={`/b/${bin.code}`}
+                      target="_blank"
+                      className="inline-flex items-center gap-1 px-2.5 py-1.5 rounded-lg bg-surface border border-line hover:bg-surface-alt text-ink font-bold text-xs"
+                      title="Open student drop page"
+                    >
+                      <QrCode className="w-3.5 h-3.5 text-brand-primary-strong" />
+                      <span>Test Scan</span>
+                    </Link>
+                  </div>
+
+                  {/* Stats Mini Grid */}
+                  <div className="grid grid-cols-2 gap-2 text-center text-xs">
+                    <div className="p-2.5 rounded-xl bg-surface-alt/70 border border-line/50">
+                      <span className="text-[10px] text-ink-muted font-bold block">Pending Drops</span>
+                      <span className="text-base font-black text-amber-800 tabular-nums">
+                        {bin.pendingItems} items
+                      </span>
+                    </div>
+                    <div className="p-2.5 rounded-xl bg-surface-alt/70 border border-line/50">
+                      <span className="text-[10px] text-ink-muted font-bold block">Lifetime Plastic</span>
+                      <span className="text-base font-black text-ink tabular-nums">
+                        {bin.totalCollectionsKg} kg
+                      </span>
                     </div>
                   </div>
 
-                  <span
-                    className={`text-[10px] font-black uppercase tracking-wider px-2 py-0.5 rounded-full ${
-                      bin.status === 'active'
-                        ? 'bg-emerald-100 text-emerald-800'
-                        : 'bg-amber-100 text-amber-800'
-                    }`}
-                  >
-                    {bin.status}
-                  </span>
+                  {/* Technical & Plate Info Drawer */}
+                  <div className="mt-3">
+                    <button
+                      type="button"
+                      onClick={() => setExpandedBinId(isExpanded ? null : bin.id)}
+                      className="w-full text-[11px] text-ink-muted hover:text-ink font-bold flex items-center justify-between py-1 px-1"
+                    >
+                      <span>Station Diagnostics &amp; GPS</span>
+                      {isExpanded ? (
+                        <ChevronUp className="w-3.5 h-3.5" />
+                      ) : (
+                        <ChevronDown className="w-3.5 h-3.5" />
+                      )}
+                    </button>
+
+                    {isExpanded && (
+                      <div className="mt-2 p-2.5 rounded-xl bg-surface-alt/90 border border-line text-[11px] space-y-1.5 font-mono text-ink-muted animate-in fade-in duration-150">
+                        <div className="flex justify-between">
+                          <span>Internal ID:</span>
+                          <span className="text-ink">{bin.id}</span>
+                        </div>
+                        <div className="flex justify-between">
+                          <span>Last Weighed:</span>
+                          <span className="text-ink">{bin.lastWeighedAt}</span>
+                        </div>
+                        <div className="flex justify-between">
+                          <span>Plate Format:</span>
+                          <span className="text-ink">A4 Landscape / 8cm QR</span>
+                        </div>
+                      </div>
+                    )}
+                  </div>
                 </div>
 
-                {/* 8-Char Unambiguous Code Display */}
-                <div className="mt-4 p-3 rounded-xl bg-surface-alt border border-line flex items-center justify-between">
-                  <div className="space-y-0.5">
-                    <span className="text-[10px] font-bold text-ink-muted uppercase tracking-wider">
-                      QR Code ID
-                    </span>
-                    <div className="font-mono text-base font-black text-brand-primary-strong tracking-widest">
-                      {bin.code}
-                    </div>
-                  </div>
+                {/* Action Toolbar */}
+                <div className="mt-4 pt-3 border-t border-line/70 flex items-center justify-between gap-1.5">
+                  <Link
+                    href={`/admin/verify?bin=${bin.id}`}
+                    className="flex-1 inline-flex items-center justify-center gap-1.5 py-2 px-2.5 rounded-xl bg-brand-primary-strong text-white font-bold text-xs shadow-xs hover:opacity-95"
+                  >
+                    <Scale className="w-3.5 h-3.5" />
+                    <span>Weigh Bin</span>
+                  </Link>
 
                   <a
-                    href={`/b/${bin.code}`}
+                    href={`/api/pdf/plate/${bin.code}`}
                     target="_blank"
                     rel="noopener noreferrer"
-                    className="text-[11px] font-bold text-brand-primary-strong hover:underline flex items-center gap-1"
+                    className="p-2 min-h-[40px] min-w-[40px] rounded-xl border border-line bg-surface hover:bg-surface-alt text-ink font-semibold flex items-center justify-center"
+                    title="Download Printable Plate (PDF)"
                   >
-                    <span>Test Drop</span>
-                    <FileText className="w-3 h-3" />
+                    <Download className="w-4 h-4 text-brand-primary-strong" />
                   </a>
-                </div>
 
-                {/* Quick Metrics */}
-                <div className="grid grid-cols-2 gap-2 mt-3 text-xs">
-                  <div className="p-2.5 rounded-xl bg-surface-alt/70 border border-line/50">
-                    <span className="text-[10px] text-ink-muted font-semibold block">Pending Items</span>
-                    <span className="text-base font-extrabold text-ink tabular-nums">
-                      {bin.pendingItems}
-                    </span>
-                  </div>
-                  <div className="p-2.5 rounded-xl bg-surface-alt/70 border border-line/50">
-                    <span className="text-[10px] text-ink-muted font-semibold block">Lifetime Plastic</span>
-                    <span className="text-base font-extrabold text-ink tabular-nums">
-                      {bin.totalCollectionsKg} kg
-                    </span>
-                  </div>
-                </div>
-
-                {/* Progressive Disclosure (Technical Details) */}
-                <div className="mt-3">
                   <button
                     type="button"
-                    onClick={() => setExpandedBinId(isExpanded ? null : bin.id)}
-                    className="w-full text-[11px] text-ink-muted hover:text-ink font-semibold flex items-center justify-between py-1 px-1"
+                    onClick={() => handleRotateCode(bin.id)}
+                    className="p-2 min-h-[40px] min-w-[40px] rounded-xl border border-line bg-surface hover:bg-surface-alt text-ink font-semibold flex items-center justify-center"
+                    title="Rotate QR Code"
                   >
-                    <span>Technical &amp; GPS Info</span>
-                    {isExpanded ? (
-                      <ChevronUp className="w-3.5 h-3.5" />
-                    ) : (
-                      <ChevronDown className="w-3.5 h-3.5" />
-                    )}
+                    <RotateCw className="w-4 h-4 text-ink-muted" />
                   </button>
 
-                  {isExpanded && (
-                    <div className="mt-2 p-2.5 rounded-xl bg-surface-alt/90 border border-line text-[11px] space-y-1.5 font-mono text-ink-muted animate-in fade-in duration-150">
-                      <div className="flex justify-between">
-                        <span>Internal ID:</span>
-                        <span className="text-ink">{bin.id}</span>
-                      </div>
-                      <div className="flex justify-between">
-                        <span>Last Weighed:</span>
-                        <span className="text-ink">{bin.lastWeighedAt}</span>
-                      </div>
-                      {bin.gpsCoords && (
-                        <div className="flex justify-between">
-                          <span>GPS Pin:</span>
-                          <span className="text-ink">
-                            {bin.gpsCoords.lat}, {bin.gpsCoords.lng}
-                          </span>
-                        </div>
-                      )}
-                      <div className="flex justify-between">
-                        <span>Plate Format:</span>
-                        <span className="text-ink">A4 Landscape / 8cm QR</span>
-                      </div>
-                    </div>
-                  )}
+                  <button
+                    type="button"
+                    onClick={() => handleToggleStatus(bin.id)}
+                    className="p-2 min-h-[40px] min-w-[40px] rounded-xl border border-line bg-surface hover:bg-surface-alt text-ink font-semibold flex items-center justify-center"
+                    title="Toggle Maintenance Mode"
+                  >
+                    <AlertTriangle
+                      className={`w-4 h-4 ${
+                        bin.status === 'active' ? 'text-amber-600' : 'text-emerald-700'
+                      }`}
+                    />
+                  </button>
                 </div>
               </div>
-
-              {/* Action Toolbar */}
-              <div className="mt-4 pt-3 border-t border-line/70 flex items-center justify-between gap-1.5">
-                <Link
-                  href={`/admin/verify?bin=${bin.id}`}
-                  className="flex-1 inline-flex items-center justify-center gap-1.5 py-2 px-2.5 rounded-xl bg-brand-primary-strong text-white font-bold text-xs shadow-xs hover:opacity-95"
-                >
-                  <Scale className="w-3.5 h-3.5" />
-                  <span>Weigh</span>
-                </Link>
-
-                <a
-                  href={`/api/pdf/plate/${bin.code}`}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="p-2 min-h-[40px] min-w-[40px] rounded-xl border border-line bg-surface hover:bg-surface-alt text-ink font-semibold flex items-center justify-center"
-                  title="Download Printable Plate (PDF)"
-                >
-                  <Download className="w-4 h-4 text-brand-primary-strong" />
-                </a>
-
-                <button
-                  type="button"
-                  onClick={() => handleRotateCode(bin.id)}
-                  className="p-2 min-h-[40px] min-w-[40px] rounded-xl border border-line bg-surface hover:bg-surface-alt text-ink font-semibold flex items-center justify-center"
-                  title="Rotate QR Code"
-                >
-                  <RotateCw className="w-4 h-4 text-ink-muted" />
-                </button>
-
-                <button
-                  type="button"
-                  onClick={() => handleToggleStatus(bin.id)}
-                  className="p-2 min-h-[40px] min-w-[40px] rounded-xl border border-line bg-surface hover:bg-surface-alt text-ink font-semibold flex items-center justify-center"
-                  title="Toggle Maintenance Mode"
-                >
-                  <AlertTriangle
-                    className={`w-4 h-4 ${
-                      bin.status === 'active' ? 'text-amber-600' : 'text-emerald-700'
-                    }`}
-                  />
-                </button>
-              </div>
-            </div>
-          );
-        })}
-      </div>
+            );
+          })}
+        </div>
+      )}
 
       {/* Add New Bin Modal */}
       {showAddModal && (
         <div className="fixed inset-0 z-50 bg-black/40 backdrop-blur-xs flex items-center justify-center p-4">
-          <div className="bg-surface rounded-2xl border border-line shadow-xl max-w-md w-full p-6 animate-in fade-in zoom-in-95 duration-150">
-            <div className="flex items-center justify-between pb-3 border-b border-line">
-              <div className="flex items-center gap-2">
-                <div className="w-8 h-8 rounded-lg bg-brand-primary-soft text-brand-primary-strong flex items-center justify-center">
-                  <Plus className="w-4 h-4" />
-                </div>
-                <h3 className="font-extrabold text-base text-ink">Add Campus Bin</h3>
-              </div>
+          <div className="bg-surface rounded-3xl border border-line max-w-md w-full p-6 shadow-xl space-y-4">
+            <div className="flex items-center justify-between border-b border-line pb-3">
+              <h3 className="font-black text-ink text-base">Provision New Campus Station</h3>
               <button
                 onClick={() => setShowAddModal(false)}
-                className="text-ink-muted hover:text-ink p-1"
+                className="p-1 rounded-lg text-ink-muted hover:text-ink"
               >
                 <X className="w-5 h-5" />
               </button>
             </div>
 
-            <form onSubmit={handleCreateBin} className="space-y-4 mt-4 text-xs">
+            <form onSubmit={handleCreateBin} className="space-y-4 text-xs">
               <div>
-                <label className="font-bold text-ink block mb-1">Bin Station Name</label>
+                <label className="block font-bold text-ink mb-1">Station Name *</label>
                 <input
                   type="text"
-                  required
-                  placeholder="e.g. Sports Complex Quad"
+                  placeholder="e.g. Student Center Quad"
                   value={newBinName}
                   onChange={(e) => setNewBinName(e.target.value)}
-                  className="w-full px-3 py-2.5 rounded-xl border border-line bg-surface text-ink text-sm font-medium focus-visible:outline-2 focus-visible:outline-brand-primary-strong"
+                  className="w-full px-3 py-2 rounded-xl border border-line bg-surface text-ink text-sm focus-visible:outline-2 focus-visible:outline-brand-primary-strong"
+                  required
                 />
               </div>
 
               <div>
-                <label className="font-bold text-ink block mb-1">Physical Location Label</label>
+                <label className="block font-bold text-ink mb-1">Location Label *</label>
                 <input
                   type="text"
-                  placeholder="e.g. Building E, Ground Floor Exit"
+                  placeholder="e.g. 1st Floor East Entrance"
                   value={newBinLocation}
                   onChange={(e) => setNewBinLocation(e.target.value)}
-                  className="w-full px-3 py-2.5 rounded-xl border border-line bg-surface text-ink text-sm font-medium focus-visible:outline-2 focus-visible:outline-brand-primary-strong"
+                  className="w-full px-3 py-2 rounded-xl border border-line bg-surface text-ink text-sm focus-visible:outline-2 focus-visible:outline-brand-primary-strong"
+                  required
                 />
               </div>
 
-              <div className="p-3 rounded-xl bg-surface-alt border border-line text-[11px] text-ink-muted flex items-start gap-2">
-                <QrCode className="w-4 h-4 text-brand-primary-strong shrink-0 mt-0.5" />
-                <span>
-                  A unique 8-character code from the unambiguous alphabet will be automatically generated.
-                </span>
+              <div className="p-3 rounded-xl bg-surface-alt text-ink-muted text-[11px] leading-relaxed">
+                A permanent 8-character unique alphanumeric code will be generated automatically.
               </div>
 
-              <div className="pt-2 flex items-center justify-end gap-2">
+              <div className="flex items-center justify-end gap-2 pt-2">
                 <button
                   type="button"
                   onClick={() => setShowAddModal(false)}
-                  className="px-4 py-2 rounded-xl border border-line text-ink font-semibold hover:bg-surface-alt"
+                  className="px-4 py-2 rounded-xl border border-line text-ink-muted hover:text-ink font-bold"
                 >
                   Cancel
                 </button>
                 <button
                   type="submit"
-                  className="px-4 py-2 rounded-xl bg-brand-primary-strong text-white font-bold shadow-xs hover:opacity-95"
+                  className="px-4 py-2 rounded-xl bg-brand-primary-strong text-white font-bold hover:opacity-95"
                 >
-                  Save Bin
+                  Create &amp; Generate Plate
                 </button>
               </div>
             </form>

@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import {
   ListFilter,
   CheckCircle2,
@@ -10,9 +10,11 @@ import {
   Eye,
   X,
   FileSpreadsheet,
+  Inbox,
 } from 'lucide-react';
 import { PlasticCategoryIcon } from '@/components/plastic/PlasticCategoryIcon';
 import { StatusBadge, EntryStatus } from '@/components/ui/StatusBadge';
+import { createClient } from '@/lib/supabase/client';
 
 interface AdminEntry {
   id: string;
@@ -36,77 +38,72 @@ export default function AdminEntriesPage() {
   const [filter, setFilter] = useState<'all' | 'pending' | 'verified' | 'flagged'>('all');
   const [searchTerm, setSearchTerm] = useState('');
   const [selectedEntry, setSelectedEntry] = useState<AdminEntry | null>(null);
+  const [entries, setEntries] = useState<AdminEntry[]>([]);
+  const [isLoading, setIsLoading] = useState(true);
 
-  const [entries] = useState<AdminEntry[]>([
-    {
-      id: 'ent-101',
-      studentName: 'Aditya Kumar',
-      rollNo: '24CS108',
-      department: 'Computer Science',
-      binName: 'Cafeteria Station A',
-      binCode: '7K3Q9DX2',
-      categoryKey: 'pet_small',
-      categoryLabel: 'Small Bottle (<750ml)',
-      items: 4,
-      pointsSnapshot: 20,
-      avgGramsSnapshot: 18,
-      status: 'pending',
-      createdAt: '12 mins ago',
-      flags: [],
-      gpsDiffMeters: 8,
-    },
-    {
-      id: 'ent-102',
-      studentName: 'Pooja Sharma',
-      rollNo: '23CS042',
-      department: 'Computer Science',
-      binName: 'Library Quad Bin',
-      binCode: '9MN42BC8',
-      categoryKey: 'pet_medium',
-      categoryLabel: 'Medium Bottle (1L-1.5L)',
-      items: 6,
-      pointsSnapshot: 48,
-      avgGramsSnapshot: 28,
-      status: 'verified',
-      createdAt: '1 hour ago',
-      flags: [],
-      gpsDiffMeters: 14,
-    },
-    {
-      id: 'ent-103',
-      studentName: 'Rahul Verma',
-      rollNo: '25BT019',
-      department: 'Biotechnology',
-      binName: 'Cafeteria Station A',
-      binCode: '7K3Q9DX2',
-      categoryKey: 'rigid_other',
-      categoryLabel: 'Rigid Container',
-      items: 3,
-      pointsSnapshot: 30,
-      avgGramsSnapshot: 45,
-      status: 'flagged',
-      createdAt: '2 hours ago',
-      flags: ['no_gps_permission'],
-      gpsDiffMeters: undefined,
-    },
-    {
-      id: 'ent-104',
-      studentName: 'Sneha Roy',
-      rollNo: '24EC088',
-      department: 'Economics',
-      binName: 'Science Block Bin',
-      binCode: '3P8R5WT4',
-      categoryKey: 'pet_large',
-      categoryLabel: 'Large Bottle (2L+)',
-      items: 2,
-      pointsSnapshot: 30,
-      avgGramsSnapshot: 52,
-      status: 'verified',
-      createdAt: 'Yesterday, 3:15 PM',
-      flags: [],
-      gpsDiffMeters: 5,
-    },
-  ]);
+  useEffect(() => {
+    async function loadEntries() {
+      try {
+        const supabase = createClient();
+        const { data } = await supabase
+          .from('entries')
+          .select(`
+            id,
+            items,
+            points_awarded,
+            points_per_item_snapshot,
+            avg_grams_snapshot,
+            status,
+            flags,
+            created_at,
+            profiles (full_name, roll_no, department),
+            bins (name, code),
+            plastic_types (key, label)
+          `)
+          .order('created_at', { ascending: false });
+
+        if (data && data.length > 0) {
+          const mapped: AdminEntry[] = data.map((e) => {
+            const prof = e.profiles as { full_name?: string; roll_no?: string; department?: string } | null;
+            const bin = e.bins as { name?: string; code?: string } | null;
+            const pt = e.plastic_types as { key?: string; label?: string } | null;
+
+            return {
+              id: e.id,
+              studentName: prof?.full_name || 'Campus Student',
+              rollNo: prof?.roll_no || 'Pending ID',
+              department: prof?.department || 'Student',
+              binName: bin?.name || 'Recycling Station',
+              binCode: bin?.code || 'BIN',
+              categoryKey: pt?.key || 'pet_small',
+              categoryLabel: pt?.label || 'Recyclable Plastic',
+              items: e.items,
+              pointsSnapshot: e.points_awarded || (e.items * (e.points_per_item_snapshot || 5)),
+              avgGramsSnapshot: e.avg_grams_snapshot || 20,
+              status: e.status as EntryStatus,
+              createdAt: new Date(e.created_at).toLocaleString([], {
+                month: 'short',
+                day: 'numeric',
+                hour: '2-digit',
+                minute: '2-digit',
+              }),
+              flags: e.flags || [],
+            };
+          });
+          setEntries(mapped);
+        } else {
+          setEntries([]);
+        }
+      } catch (err) {
+        console.warn('Could not query live admin entries:', err);
+        setEntries([]);
+      } finally {
+        setIsLoading(false);
+      }
+    }
+
+    loadEntries();
+  }, []);
 
   const filteredEntries = entries.filter((e) => {
     // Filter by tab
@@ -145,28 +142,30 @@ export default function AdminEntriesPage() {
           </div>
         </div>
 
-        <button
-          type="button"
-          onClick={() => {
-            const csv = [
-              'id,student,roll,bin,category,items,points,status,time',
-              ...entries.map(
-                (e) =>
-                  `${e.id},"${e.studentName}",${e.rollNo},"${e.binName}","${e.categoryLabel}",${e.items},${e.pointsSnapshot},${e.status},"${e.createdAt}"`
-              ),
-            ].join('\n');
-            const blob = new Blob([csv], { type: 'text/csv' });
-            const url = URL.createObjectURL(blob);
-            const a = document.createElement('a');
-            a.href = url;
-            a.download = `entries-export-${Date.now()}.csv`;
-            a.click();
-          }}
-          className="inline-flex items-center gap-1.5 px-3.5 py-2 rounded-xl border border-line bg-surface hover:bg-surface-alt font-bold text-xs text-ink shadow-xs"
-        >
-          <FileSpreadsheet className="w-4 h-4 text-brand-primary-strong" />
-          <span>Export CSV</span>
-        </button>
+        {entries.length > 0 && (
+          <button
+            type="button"
+            onClick={() => {
+              const csv = [
+                'id,student,roll,bin,category,items,points,status,time',
+                ...entries.map(
+                  (e) =>
+                    `${e.id},"${e.studentName}",${e.rollNo},"${e.binName}","${e.categoryLabel}",${e.items},${e.pointsSnapshot},${e.status},"${e.createdAt}"`
+                ),
+              ].join('\n');
+              const blob = new Blob([csv], { type: 'text/csv' });
+              const url = URL.createObjectURL(blob);
+              const a = document.createElement('a');
+              a.href = url;
+              a.download = `entries-export-${Date.now()}.csv`;
+              a.click();
+            }}
+            className="inline-flex items-center gap-1.5 px-3.5 py-2 rounded-xl border border-line bg-surface hover:bg-surface-alt font-bold text-xs text-ink shadow-xs"
+          >
+            <FileSpreadsheet className="w-4 h-4 text-brand-primary-strong" />
+            <span>Export CSV</span>
+          </button>
+        )}
       </div>
 
       {/* Filter and Search Bar */}
@@ -191,7 +190,7 @@ export default function AdminEntriesPage() {
             onClick={() => setFilter('pending')}
             className={`px-3 py-2 rounded-xl transition-colors flex items-center gap-1.5 ${
               filter === 'pending'
-                ? 'bg-amber-600 text-white'
+                ? 'bg-amber-700 text-white'
                 : 'text-ink-muted hover:text-ink hover:bg-surface-alt'
             }`}
           >
@@ -247,46 +246,73 @@ export default function AdminEntriesPage() {
       </div>
 
       {/* Entries List / Cards */}
-      <div className="space-y-3">
-        {filteredEntries.length === 0 ? (
-          <div className="bg-surface rounded-2xl border border-line p-12 text-center text-ink-muted">
-            <ListFilter className="w-10 h-10 mx-auto mb-2 text-ink-muted/50" />
-            <p className="font-semibold text-sm">No entries matching the current filter</p>
+      {isLoading ? (
+        <div className="py-16 text-center text-xs text-ink-muted space-y-2">
+          <div className="w-6 h-6 rounded-full border-2 border-brand-primary-strong border-t-transparent animate-spin mx-auto" />
+          <p>Syncing live database entries...</p>
+        </div>
+      ) : filteredEntries.length === 0 ? (
+        <div className="bg-surface rounded-2xl border border-line p-12 text-center space-y-3">
+          <div className="w-12 h-12 rounded-2xl bg-surface-alt border border-line text-brand-primary-strong mx-auto flex items-center justify-center">
+            <Inbox className="w-6 h-6 stroke-[1.5]" />
           </div>
-        ) : (
-          filteredEntries.map((entry) => (
+          <div className="space-y-1">
+            <h3 className="text-sm font-bold text-ink">No Entries Found</h3>
+            <p className="text-xs text-ink-muted max-w-sm mx-auto">
+              {entries.length === 0
+                ? 'No student drops have been recorded yet in the database.'
+                : 'No entries match the active search or status filter.'}
+            </p>
+          </div>
+        </div>
+      ) : (
+        <div className="space-y-3">
+          {filteredEntries.map((entry) => (
             <div
               key={entry.id}
-              className="bg-surface rounded-2xl border border-line p-4 shadow-xs hover:border-brand-primary-strong/40 transition-all flex flex-col md:flex-row md:items-center justify-between gap-3 text-xs"
+              className="bg-surface rounded-2xl border border-line p-4 shadow-xs flex flex-col md:flex-row md:items-center justify-between gap-4 hover:border-brand-primary-strong/40 transition-colors"
             >
-              <div className="flex items-center gap-3">
-                <div className="w-12 h-12 rounded-2xl bg-brand-primary-soft text-brand-primary-strong flex items-center justify-center shrink-0">
-                  <PlasticCategoryIcon typeKey={entry.categoryKey} className="w-6 h-6" />
+              <div className="flex items-start gap-3.5">
+                <div className="w-11 h-11 rounded-2xl bg-brand-primary-soft text-brand-primary-strong flex items-center justify-center shrink-0">
+                  <PlasticCategoryIcon typeKey={entry.categoryKey} className="w-5 h-5" />
                 </div>
-                <div>
+                <div className="space-y-1">
                   <div className="flex items-center gap-2">
                     <span className="font-extrabold text-sm text-ink">{entry.studentName}</span>
-                    <span className="font-mono text-[11px] text-ink-muted px-1.5 py-0.5 rounded bg-surface-alt border border-line">
+                    <span className="px-2 py-0.5 rounded-full bg-surface-alt border border-line text-[10px] font-mono font-bold text-ink-muted">
                       {entry.rollNo}
                     </span>
+                    <span className="text-xs text-ink-muted hidden sm:inline">• {entry.department}</span>
                   </div>
-                  <div className="text-[11px] text-ink-muted mt-0.5 flex items-center gap-1.5">
-                    <span className="font-semibold text-ink">{entry.items} items</span>
-                    <span>•</span>
-                    <span>{entry.categoryLabel}</span>
+
+                  <div className="text-xs text-ink-muted flex flex-wrap items-center gap-2">
+                    <span className="font-bold text-ink">
+                      {entry.items} items ({entry.categoryLabel})
+                    </span>
                     <span>•</span>
                     <span>{entry.binName}</span>
+                    <span className="font-mono text-[10px] text-brand-primary-strong">
+                      ({entry.binCode})
+                    </span>
+                    <span>•</span>
+                    <span>{entry.createdAt}</span>
                   </div>
+
+                  {entry.flags && entry.flags.length > 0 && (
+                    <div className="flex items-center gap-1 text-[11px] text-rose-800 font-bold mt-1">
+                      <AlertTriangle className="w-3.5 h-3.5" />
+                      <span>Flagged: {entry.flags.join(', ')}</span>
+                    </div>
+                  )}
                 </div>
               </div>
 
-              {/* Status & Quick Action */}
-              <div className="flex items-center justify-between md:justify-end gap-3 pt-2 md:pt-0 border-t md:border-t-0 border-line/60">
+              <div className="flex items-center justify-between md:justify-end gap-3 shrink-0 pt-2 md:pt-0 border-t md:border-t-0 border-line">
                 <div className="text-right">
-                  <div className="font-black text-brand-primary-strong text-sm tabular-nums">
+                  <div className="text-sm font-black text-ink tabular-nums">
                     +{entry.pointsSnapshot} pts
                   </div>
-                  <div className="text-[10px] text-ink-muted">{entry.createdAt}</div>
+                  <div className="text-[10px] text-ink-muted">~{entry.avgGramsSnapshot}g est.</div>
                 </div>
 
                 <StatusBadge status={entry.status} size="sm" />
@@ -294,89 +320,67 @@ export default function AdminEntriesPage() {
                 <button
                   type="button"
                   onClick={() => setSelectedEntry(entry)}
-                  className="p-2 min-h-[36px] min-w-[36px] rounded-xl border border-line bg-surface hover:bg-surface-alt text-ink font-semibold flex items-center justify-center"
-                  title="View Audit Details"
+                  className="p-2 rounded-xl border border-line hover:bg-surface-alt text-ink-muted hover:text-ink transition-colors"
+                  aria-label="View details"
                 >
-                  <Eye className="w-4 h-4 text-ink-muted" />
+                  <Eye className="w-4 h-4" />
                 </button>
               </div>
             </div>
-          ))
-        )}
-      </div>
+          ))}
+        </div>
+      )}
 
-      {/* Detailed Audit Modal (Hides intricate details cleanly until requested) */}
+      {/* Drawer / Detail Modal */}
       {selectedEntry && (
         <div className="fixed inset-0 z-50 bg-black/40 backdrop-blur-xs flex items-center justify-center p-4">
-          <div className="bg-surface rounded-2xl border border-line shadow-xl max-w-lg w-full p-6 animate-in fade-in zoom-in-95 duration-150">
-            <div className="flex items-center justify-between pb-3 border-b border-line">
+          <div className="bg-surface rounded-3xl border border-line max-w-md w-full p-6 shadow-xl space-y-5">
+            <div className="flex items-center justify-between border-b border-line pb-3">
               <div className="flex items-center gap-2">
-                <div className="w-8 h-8 rounded-lg bg-brand-primary-soft text-brand-primary-strong flex items-center justify-center">
-                  <Eye className="w-4 h-4" />
-                </div>
-                <h3 className="font-extrabold text-base text-ink">Entry Audit Record</h3>
+                <PlasticCategoryIcon typeKey={selectedEntry.categoryKey} className="w-5 h-5 text-brand-primary-strong" />
+                <h3 className="font-black text-ink text-base">Drop Entry Detail</h3>
               </div>
               <button
                 onClick={() => setSelectedEntry(null)}
-                className="text-ink-muted hover:text-ink p-1"
+                className="p-1 rounded-lg text-ink-muted hover:text-ink"
               >
                 <X className="w-5 h-5" />
               </button>
             </div>
 
-            <div className="mt-4 space-y-3 text-xs">
-              <div className="p-3 rounded-xl bg-surface-alt border border-line space-y-1 font-mono text-[11px]">
-                <div className="flex justify-between">
-                  <span className="text-ink-muted">Transaction ID:</span>
-                  <span className="font-bold text-ink">{selectedEntry.id}</span>
+            <div className="space-y-3 text-xs">
+              <div className="p-3 rounded-xl bg-surface-alt border border-line space-y-1">
+                <div className="font-bold text-ink text-sm">{selectedEntry.studentName}</div>
+                <div className="text-ink-muted">Roll: {selectedEntry.rollNo} • {selectedEntry.department}</div>
+              </div>
+
+              <div className="grid grid-cols-2 gap-2">
+                <div className="p-3 rounded-xl bg-surface-alt border border-line">
+                  <span className="text-[10px] text-ink-muted font-bold uppercase">Items</span>
+                  <div className="text-base font-black text-ink mt-0.5">{selectedEntry.items} items</div>
+                  <div className="text-[10px] text-ink-muted">{selectedEntry.categoryLabel}</div>
                 </div>
-                <div className="flex justify-between">
-                  <span className="text-ink-muted">Bin Station Code:</span>
-                  <span className="font-bold text-ink">{selectedEntry.binCode}</span>
-                </div>
-                <div className="flex justify-between">
-                  <span className="text-ink-muted">Rate Snapshot:</span>
-                  <span className="text-ink">
-                    {selectedEntry.pointsSnapshot / selectedEntry.items} pts/item •{' '}
-                    {selectedEntry.avgGramsSnapshot}g/item
-                  </span>
-                </div>
-                <div className="flex justify-between">
-                  <span className="text-ink-muted">GPS Accuracy:</span>
-                  <span className="text-ink">
-                    {selectedEntry.gpsDiffMeters !== undefined
-                      ? `${selectedEntry.gpsDiffMeters}m from bin`
-                      : 'Permission Denied (Flagged)'}
-                  </span>
+
+                <div className="p-3 rounded-xl bg-surface-alt border border-line">
+                  <span className="text-[10px] text-ink-muted font-bold uppercase">Credits</span>
+                  <div className="text-base font-black text-brand-primary-strong mt-0.5">+{selectedEntry.pointsSnapshot} pts</div>
+                  <div className="text-[10px] text-ink-muted">~{selectedEntry.avgGramsSnapshot}g est.</div>
                 </div>
               </div>
 
-              <div className="space-y-1">
-                <span className="font-bold text-ink">Student Identification:</span>
-                <p className="text-ink-muted">
-                  {selectedEntry.studentName} ({selectedEntry.rollNo}) • Department of{' '}
-                  {selectedEntry.department}
-                </p>
-              </div>
-
-              <div className="space-y-1">
-                <span className="font-bold text-ink">Audit Integrity Notice:</span>
-                <p className="text-ink-muted text-[11px]">
-                  This entry is immutable in Postgres. Points and rates were snapshotted at the
-                  moment of submission and cannot be retroactively altered.
-                </p>
+              <div className="p-3 rounded-xl bg-surface-alt border border-line space-y-1">
+                <span className="text-[10px] text-ink-muted font-bold uppercase">Drop Station</span>
+                <div className="font-bold text-ink">{selectedEntry.binName} ({selectedEntry.binCode})</div>
+                <div className="text-[10px] text-ink-muted">Timestamp: {selectedEntry.createdAt}</div>
               </div>
             </div>
 
-            <div className="mt-6 pt-3 border-t border-line flex justify-end">
-              <button
-                type="button"
-                onClick={() => setSelectedEntry(null)}
-                className="px-4 py-2 rounded-xl bg-brand-primary-strong text-white font-bold shadow-xs hover:opacity-95 text-xs"
-              >
-                Close Audit View
-              </button>
-            </div>
+            <button
+              onClick={() => setSelectedEntry(null)}
+              className="w-full py-2.5 rounded-xl bg-brand-primary-strong text-white font-bold text-xs"
+            >
+              Close
+            </button>
           </div>
         </div>
       )}

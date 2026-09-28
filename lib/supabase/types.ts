@@ -40,6 +40,7 @@ export interface Database {
           timezone?: string;
           created_at?: string;
         };
+        Relationships: [];
       };
       profiles: {
         Row: {
@@ -47,9 +48,12 @@ export interface Database {
           campus_id: string | null;
           role: UserRole;
           full_name: string;
+          first_name: string | null;
+          last_name: string | null;
           roll_no: string | null;
           department: string | null;
           year: string | null;
+          semester: string | null;
           phone: string | null;
           is_adult: boolean;
           show_on_leaderboard: boolean;
@@ -63,9 +67,12 @@ export interface Database {
           campus_id?: string | null;
           role?: UserRole;
           full_name: string;
+          first_name?: string | null;
+          last_name?: string | null;
           roll_no?: string | null;
           department?: string | null;
           year?: string | null;
+          semester?: string | null;
           phone?: string | null;
           is_adult?: boolean;
           show_on_leaderboard?: boolean;
@@ -79,9 +86,12 @@ export interface Database {
           campus_id?: string | null;
           role?: UserRole;
           full_name?: string;
+          first_name?: string | null;
+          last_name?: string | null;
           roll_no?: string | null;
           department?: string | null;
           year?: string | null;
+          semester?: string | null;
           phone?: string | null;
           is_adult?: boolean;
           show_on_leaderboard?: boolean;
@@ -90,6 +100,7 @@ export interface Database {
           status?: UserStatus;
           created_at?: string;
         };
+        Relationships: [];
       };
       bins: {
         Row: {
@@ -128,6 +139,7 @@ export interface Database {
           last_verified_at?: string | null;
           created_at?: string;
         };
+        Relationships: [];
       };
       plastic_types: {
         Row: {
@@ -160,6 +172,7 @@ export interface Database {
           sort?: number;
           created_at?: string;
         };
+        Relationships: [];
       };
       entries: {
         Row: {
@@ -222,6 +235,7 @@ export interface Database {
           decided_at?: string | null;
           created_at?: string;
         };
+        Relationships: [];
       };
       verification_batches: {
         Row: {
@@ -243,6 +257,45 @@ export interface Database {
           finalized_at: string | null;
           created_at: string;
         };
+        Insert: {
+          id?: string;
+          bin_id: string;
+          created_by: string;
+          cutoff_at?: string;
+          weighed_grams: number;
+          tare_grams?: number;
+          expected_grams?: number;
+          ratio?: number | null;
+          entries_count?: number;
+          items_count?: number;
+          decision?: BatchDecision | null;
+          scale_factor?: number;
+          status?: BatchStatus;
+          note?: string | null;
+          scale_photo_path?: string | null;
+          finalized_at?: string | null;
+          created_at?: string;
+        };
+        Update: {
+          id?: string;
+          bin_id?: string;
+          created_by?: string;
+          cutoff_at?: string;
+          weighed_grams?: number;
+          tare_grams?: number;
+          expected_grams?: number;
+          ratio?: number | null;
+          entries_count?: number;
+          items_count?: number;
+          decision?: BatchDecision | null;
+          scale_factor?: number;
+          status?: BatchStatus;
+          note?: string | null;
+          scale_photo_path?: string | null;
+          finalized_at?: string | null;
+          created_at?: string;
+        };
+        Relationships: [];
       };
       points_ledger: {
         Row: {
@@ -256,6 +309,29 @@ export interface Database {
           created_by: string | null;
           created_at: string;
         };
+        Insert: {
+          id?: string;
+          student_id: string;
+          entry_id?: string | null;
+          batch_id?: string | null;
+          points: number;
+          kind: LedgerKind;
+          note?: string | null;
+          created_by?: string | null;
+          created_at?: string;
+        };
+        Update: {
+          id?: string;
+          student_id?: string;
+          entry_id?: string | null;
+          batch_id?: string | null;
+          points?: number;
+          kind?: LedgerKind;
+          note?: string | null;
+          created_by?: string | null;
+          created_at?: string;
+        };
+        Relationships: [];
       };
       tiers: {
         Row: {
@@ -267,6 +343,25 @@ export interface Database {
           active: boolean;
           created_at: string;
         };
+        Insert: {
+          id?: string;
+          key: string;
+          name: string;
+          min_points: number;
+          sort?: number;
+          active?: boolean;
+          created_at?: string;
+        };
+        Update: {
+          id?: string;
+          key?: string;
+          name?: string;
+          min_points?: number;
+          sort?: number;
+          active?: boolean;
+          created_at?: string;
+        };
+        Relationships: [];
       };
       certificates: {
         Row: {
@@ -280,6 +375,29 @@ export interface Database {
           status: CertificateStatus;
           issued_at: string;
         };
+        Insert: {
+          id?: string;
+          student_id: string;
+          tier_id: string;
+          certificate_no: string;
+          items_at_issue: number;
+          points_at_issue: number;
+          pdf_path?: string | null;
+          status?: CertificateStatus;
+          issued_at?: string;
+        };
+        Update: {
+          id?: string;
+          student_id?: string;
+          tier_id?: string;
+          certificate_no?: string;
+          items_at_issue?: number;
+          points_at_issue?: number;
+          pdf_path?: string | null;
+          status?: CertificateStatus;
+          issued_at?: string;
+        };
+        Relationships: [];
       };
       settings: {
         Row: {
@@ -289,6 +407,21 @@ export interface Database {
           updated_by: string | null;
           updated_at: string;
         };
+        Insert: {
+          key: string;
+          value: Json;
+          is_public?: boolean;
+          updated_by?: string | null;
+          updated_at?: string;
+        };
+        Update: {
+          key?: string;
+          value?: Json;
+          is_public?: boolean;
+          updated_by?: string | null;
+          updated_at?: string;
+        };
+        Relationships: [];
       };
       sales: {
         Row: {
@@ -303,6 +436,31 @@ export interface Database {
           note: string | null;
           created_at: string;
         };
+        Insert: {
+          id?: string;
+          sale_date: string;
+          buyer: string;
+          plastic_kind: string;
+          weight_grams: number;
+          rate_paise_per_kg: number;
+          amount_paise: number;
+          invoice_ref?: string | null;
+          note?: string | null;
+          created_at?: string;
+        };
+        Update: {
+          id?: string;
+          sale_date?: string;
+          buyer?: string;
+          plastic_kind?: string;
+          weight_grams?: number;
+          rate_paise_per_kg?: number;
+          amount_paise?: number;
+          invoice_ref?: string | null;
+          note?: string | null;
+          created_at?: string;
+        };
+        Relationships: [];
       };
       expenses: {
         Row: {
@@ -313,6 +471,23 @@ export interface Database {
           note: string | null;
           created_at: string;
         };
+        Insert: {
+          id?: string;
+          expense_date: string;
+          category: string;
+          amount_paise: number;
+          note?: string | null;
+          created_at?: string;
+        };
+        Update: {
+          id?: string;
+          expense_date?: string;
+          category?: string;
+          amount_paise?: number;
+          note?: string | null;
+          created_at?: string;
+        };
+        Relationships: [];
       };
       audit_log: {
         Row: {
@@ -325,7 +500,31 @@ export interface Database {
           after: Json | null;
           created_at: string;
         };
+        Insert: {
+          id?: string;
+          actor_id?: string | null;
+          action: string;
+          target_type: string;
+          target_id?: string | null;
+          before?: Json | null;
+          after?: Json | null;
+          created_at?: string;
+        };
+        Update: {
+          id?: string;
+          actor_id?: string | null;
+          action?: string;
+          target_type?: string;
+          target_id?: string | null;
+          before?: Json | null;
+          after?: Json | null;
+          created_at?: string;
+        };
+        Relationships: [];
       };
+    };
+    Views: {
+      [_ in never]: never;
     };
     Functions: {
       public_bin_lookup: {
@@ -398,6 +597,12 @@ export interface Database {
           certificates_issued: number;
         };
       };
+    };
+    Enums: {
+      [_ in never]: never;
+    };
+    CompositeTypes: {
+      [_ in never]: never;
     };
   };
 }

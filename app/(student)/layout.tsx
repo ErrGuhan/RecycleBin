@@ -24,7 +24,7 @@ export default function StudentLayout({
   return (
     <div className="min-h-screen bg-surface-alt flex flex-col items-center">
       {/* Centered Mobile-First Frame */}
-      <div className="w-full max-w-md min-h-screen bg-surface flex flex-col shadow-sm border-x border-line relative pb-20">
+      <div className="w-full max-w-md min-h-screen bg-surface flex flex-col shadow-sm border-x border-line relative pb-24">
         {/* Top Header */}
         <header className="sticky top-0 z-20 bg-surface/95 backdrop-blur border-b border-line px-4 h-14 flex items-center justify-between">
           <BrandLogo href="/home" showSubtitle={false} />
@@ -36,12 +36,12 @@ export default function StudentLayout({
         </header>
 
         {/* Dynamic Body */}
-        <main className="flex-1 p-4 overflow-y-auto">{children}</main>
+        <main className="flex-1 p-4 pb-24 overflow-y-auto">{children}</main>
 
         {/* Bottom Tab Bar (Fixed for Mobile One-Handed Navigation) */}
         <nav
           aria-label="Student Navigation"
-          className="fixed bottom-0 left-0 right-0 z-30 bg-surface/98 backdrop-blur-md border-t border-line py-1 px-2 flex items-center justify-around max-w-md mx-auto"
+          className="fixed bottom-0 left-1/2 -translate-x-1/2 z-30 bg-surface/98 backdrop-blur-md border-t border-x border-line py-1.5 px-3 flex items-center justify-around w-full max-w-md shadow-lg"
         >
           {navItems.map((item) => {
             const Icon = item.icon;
