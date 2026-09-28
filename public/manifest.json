@@ -1,0 +1,17 @@
+{
+  "name": "Campus Plastic Credits",
+  "short_name": "PlasticCredits",
+  "description": "Log clean plastic at campus drop stations and earn verified sustainability certificates.",
+  "start_url": "/home",
+  "display": "standalone",
+  "background_color": "#FFFFFF",
+  "theme_color": "#00796B",
+  "orientation": "portrait",
+  "icons": [
+    {
+      "src": "/favicon.ico",
+      "sizes": "64x64 32x32 24x24 16x16",
+      "type": "image/x-icon"
+    }
+  ]
+}

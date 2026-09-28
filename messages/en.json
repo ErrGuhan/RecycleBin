@@ -1,0 +1,86 @@
+{
+  "app": {
+    "name": "Campus Plastic Credits",
+    "tagline": "Campus Recycling & Rewards Portal",
+    "brand_placeholder": "Bisleri"
+  },
+  "landing": {
+    "headline": "Drop your bottle. Scan the bin. Earn credit.",
+    "subhead": "Log the plastic you recycle on campus. Points are added after each bin is weighed and verified, and certificates follow as your contribution grows.",
+    "cta_scan": "Scan a bin to start",
+    "cta_how_it_works": "How it works",
+    "how_it_works_title": "How it works",
+    "step_1_title": "1. Drop",
+    "step_1_desc": "Drop clean, empty plastic into a marked bin.",
+    "step_2_title": "2. Scan",
+    "step_2_desc": "Scan the QR on the bin and sign in once.",
+    "step_3_title": "3. Count & Earn",
+    "step_3_desc": "Enter how many items you dropped. Points arrive after verification."
+  },
+  "status": {
+    "pending": "Waiting for this bin to be weighed.",
+    "verified": "Points added.",
+    "rejected": "Not counted. {reason}",
+    "cancelled": "You cancelled this entry."
+  },
+  "messages": {
+    "inactive_bin": "This QR is no longer active. Scan the newer QR on the bin, or ask the programme team.",
+    "daily_cap": "You've logged {n} items today, which is the daily limit. You can log more after midnight.",
+    "bin_signed_out": "Sign in to log your drop at {bin_name}.",
+    "empty_history": "Nothing here yet. Scan a bin after your next drop.",
+    "entry_saved": "{count} items saved. Points are added after this bin is weighed and verified.",
+    "cooldown_active": "Please wait {seconds}s before submitting again for this bin.",
+    "geofence_warning": "You appear to be away from this bin's location. Your drop will be logged with a verification flag."
+  },
+  "actions": {
+    "save_entry": "Save entry",
+    "undo": "Undo",
+    "sign_in": "Sign in to log your drop",
+    "sign_out": "Sign out",
+    "approve_all": "Approve all",
+    "scale_batch": "Scale points",
+    "reject_entry": "Reject entry",
+    "adjust_items": "Adjust items",
+    "view_history": "View history",
+    "view_certificates": "View certificates",
+    "download_pdf": "Download PDF Certificate",
+    "export_my_data": "Download my data",
+    "delete_my_account": "Delete my account"
+  },
+  "tiers": {
+    "bronze": "Bronze",
+    "silver": "Silver",
+    "gold": "Gold",
+    "platinum": "Platinum"
+  },
+  "faq": [
+    {
+      "q": "Why are my points pending?",
+      "a": "We verify every bin by weighing it, so points are added after that check (daily or weekly)."
+    },
+    {
+      "q": "What can I put in the bin?",
+      "a": "[CLIENT TO CONFIRM: accepted items and rules, for example clean and empty, caps on or off, labels]."
+    },
+    {
+      "q": "I entered the wrong number.",
+      "a": "You can cancel an entry within 5 minutes while it is still pending. After that, contact sustainability@campusplasticcredits.org."
+    },
+    {
+      "q": "How many items can I log?",
+      "a": "Up to 20 per entry and 40 per day. Limits keep counts fair."
+    },
+    {
+      "q": "How do certificates work?",
+      "a": "When your points reach a tier, we issue a PDF certificate with a unique ID that anyone can verify online."
+    },
+    {
+      "q": "Who can see my data?",
+      "a": "Only you and the programme admins. Public certificate checks show your first name and last initial only. See the privacy notice."
+    }
+  ],
+  "footer": {
+    "client_info": "[CLIENT TO CONFIRM: company name, address, support email and phone]",
+    "support_email": "sustainability@campusplasticcredits.org"
+  }
+}
