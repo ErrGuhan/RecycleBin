@@ -11,11 +11,39 @@ import {
   Building,
   CheckCircle2,
   FileSpreadsheet,
+  Copy,
+  ExternalLink,
+  RefreshCw,
 } from 'lucide-react';
 import { PlasticCategoryIcon } from '@/components/plastic/PlasticCategoryIcon';
 
 export default function AdminReportsPage() {
   const [timeRange, setTimeRange] = useState('ay_2026');
+  const [copiedFormula, setCopiedFormula] = useState(false);
+  const [syncStatus, setSyncStatus] = useState<string | null>(null);
+
+  const handleCopyFormula = () => {
+    const origin = typeof window !== 'undefined' ? window.location.origin : 'http://localhost:3000';
+    const formula = `=IMPORTDATA("${origin}/api/sheets/feed?type=entries")`;
+    navigator.clipboard.writeText(formula);
+    setCopiedFormula(true);
+    setTimeout(() => setCopiedFormula(false), 3000);
+  };
+
+  const handleTestSync = async () => {
+    setSyncStatus('Testing connection...');
+    try {
+      const res = await fetch('/api/sheets/feed?type=entries');
+      if (res.ok) {
+        setSyncStatus('Feed is live and healthy (200 OK)! Ready for Google Sheets.');
+      } else {
+        setSyncStatus(`Feed returned status: ${res.status}`);
+      }
+    } catch (err) {
+      setSyncStatus(`Connection error: ${(err as Error).message}`);
+    }
+    setTimeout(() => setSyncStatus(null), 5000);
+  };
 
   const stats = {
     totalKg: 168.7,
@@ -251,6 +279,85 @@ export default function AdminReportsPage() {
           <CheckCircle2 className="w-4 h-4 text-brand-primary-strong shrink-0 mt-0.5" />
           <span>
             All exported CSV files contain immutable UTC timestamps and Postgres transaction IDs for third-party institutional verification.
+          </span>
+        </div>
+      </div>
+
+      {/* Google Sheets Real-Time Synchronization Card */}
+      <div className="bg-surface rounded-2xl border-2 border-emerald-600/30 p-6 shadow-xs space-y-4">
+        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+          <div className="flex items-center gap-3">
+            <div className="w-10 h-10 rounded-xl bg-emerald-100 text-emerald-800 flex items-center justify-center shrink-0">
+              <FileSpreadsheet className="w-6 h-6" />
+            </div>
+            <div>
+              <h2 className="font-extrabold text-base text-ink">Google Sheets Real-Time Sync</h2>
+              <p className="text-xs text-ink-muted">
+                Connect your portal directly to Google Sheets using the native live formula or webhook
+              </p>
+            </div>
+          </div>
+
+          <a
+            href="/api/sheets/feed?type=entries"
+            target="_blank"
+            rel="noopener noreferrer"
+            className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl border border-line text-xs font-bold text-ink hover:bg-surface-alt"
+          >
+            <span>Preview Live Feed</span>
+            <ExternalLink className="w-3.5 h-3.5" />
+          </a>
+        </div>
+
+        {syncStatus && (
+          <div className="p-3 rounded-xl bg-emerald-50 border border-emerald-200 text-emerald-900 text-xs font-semibold flex items-center gap-2">
+            <CheckCircle2 className="w-4 h-4 text-emerald-700 shrink-0" />
+            <span>{syncStatus}</span>
+          </div>
+        )}
+
+        <div className="p-4 rounded-xl bg-surface-alt border border-line space-y-3">
+          <div className="flex items-center justify-between">
+            <span className="text-xs font-bold text-ink">
+              Method 1: Google Sheets Live Feed Formula (Zero Setup)
+            </span>
+            <span className="text-[10px] font-black uppercase tracking-wider px-2 py-0.5 rounded-full bg-emerald-100 text-emerald-800">
+              Instant
+            </span>
+          </div>
+
+          <p className="text-xs text-ink-muted">
+            In any Google Sheet, click cell <strong>A1</strong> and paste this formula. Google
+            Sheets will automatically stream all verified and pending student drops in real time:
+          </p>
+
+          <div className="flex items-center gap-2">
+            <div className="flex-1 font-mono text-xs bg-surface p-2.5 rounded-xl border border-line overflow-x-auto text-emerald-900 font-bold select-all">
+              {`=IMPORTDATA("${typeof window !== 'undefined' ? window.location.origin : 'https://YOUR-APP.vercel.app'}/api/sheets/feed?type=entries")`}
+            </div>
+            <button
+              type="button"
+              onClick={handleCopyFormula}
+              className="inline-flex items-center gap-1.5 px-4 py-2.5 rounded-xl bg-brand-primary-strong text-white font-bold text-xs shadow-xs hover:opacity-95 shrink-0"
+            >
+              <Copy className="w-3.5 h-3.5" />
+              <span>{copiedFormula ? 'Copied! ✓' : 'Copy Formula'}</span>
+            </button>
+          </div>
+        </div>
+
+        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 pt-2 text-xs">
+          <button
+            type="button"
+            onClick={handleTestSync}
+            className="inline-flex items-center gap-1.5 font-bold text-brand-primary-strong hover:underline"
+          >
+            <RefreshCw className="w-3.5 h-3.5" />
+            <span>Test Real-Time Feed Connectivity</span>
+          </button>
+
+          <span className="text-ink-muted">
+            For Google Apps Script instant push webhook, see <strong>docs/google_sheets_sync.md</strong>
           </span>
         </div>
       </div>
