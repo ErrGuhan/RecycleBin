@@ -3,7 +3,8 @@
 import React, { useState } from 'react';
 import Link from 'next/link';
 import {
-  Shield,
+  Settings,
+  ShieldCheck,
   Download,
   Trash2,
   CheckCircle2,
@@ -13,6 +14,12 @@ import {
 export default function StudentAccountPage() {
   const [showOnLeaderboard, setShowOnLeaderboard] = useState(true);
   const [dataDownloaded, setDataDownloaded] = useState(false);
+  const [toastMessage, setToastMessage] = useState<string | null>(null);
+
+  const showToast = (msg: string) => {
+    setToastMessage(msg);
+    setTimeout(() => setToastMessage(null), 3000);
+  };
 
   const studentProfile = {
     name: 'Aditya Kumar',
@@ -43,13 +50,25 @@ export default function StudentAccountPage() {
     a.download = `campus-plastic-credits-data-${studentProfile.rollNo}.json`;
     a.click();
     setDataDownloaded(true);
+    showToast('Your account data archive has been downloaded.');
   };
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-6 relative">
+      {/* Toast Notification (BUILD_PROMPT.md §8.7) */}
+      {toastMessage && (
+        <div className="fixed top-5 left-1/2 -translate-x-1/2 z-50 px-4 py-2.5 rounded-xl bg-ink text-white text-xs font-semibold shadow-lg flex items-center gap-2 animate-in fade-in slide-in-from-top duration-200">
+          <CheckCircle2 className="w-4 h-4 text-emerald-400 shrink-0" />
+          <span>{toastMessage}</span>
+        </div>
+      )}
+
       <div>
-        <h1 className="text-xl font-black text-ink tracking-tight">Account &amp; Privacy</h1>
-        <p className="text-xs text-ink-muted">Manage your profile, data rights, and preferences</p>
+        <div className="flex items-center gap-2">
+          <Settings className="w-5 h-5 text-brand-primary-strong" />
+          <h1 className="text-xl font-black text-ink tracking-tight">Account &amp; Privacy</h1>
+        </div>
+        <p className="text-xs text-ink-muted mt-1">Manage your profile, data rights, and preferences</p>
       </div>
 
       {/* Profile Card */}
@@ -104,7 +123,11 @@ export default function StudentAccountPage() {
             type="button"
             role="switch"
             aria-checked={showOnLeaderboard}
-            onClick={() => setShowOnLeaderboard(!showOnLeaderboard)}
+            onClick={() => {
+              const nextVal = !showOnLeaderboard;
+              setShowOnLeaderboard(nextVal);
+              showToast(nextVal ? 'Leaderboard participation enabled.' : 'Removed from public leaderboard.');
+            }}
             className={`w-12 h-6 rounded-full transition-colors relative focus-visible:outline-2 focus-visible:outline-brand-primary-strong ${
               showOnLeaderboard ? 'bg-brand-primary-strong' : 'bg-slate-300'
             }`}
@@ -121,7 +144,7 @@ export default function StudentAccountPage() {
       {/* DPDP Data Rights */}
       <div className="bg-surface rounded-2xl border border-line p-5 shadow-xs space-y-4">
         <div className="flex items-center gap-2">
-          <Shield className="w-4 h-4 text-brand-primary-strong" />
+          <ShieldCheck className="w-5 h-5 text-brand-primary-strong" />
           <h3 className="font-bold text-sm text-ink">Your Data Rights (DPDP Act)</h3>
         </div>
 

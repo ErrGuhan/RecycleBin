@@ -1,7 +1,5 @@
-'use client';
-
 import React from 'react';
-import { Shield, Sparkles } from 'lucide-react';
+import { Trophy, Users, Shield } from 'lucide-react';
 
 export default function StudentLeaderboardPage() {
   const leaders = [
@@ -18,10 +16,13 @@ export default function StudentLeaderboardPage() {
     <div className="space-y-6">
       <div>
         <div className="flex items-center gap-1.5 text-xs font-bold text-brand-primary-strong bg-brand-primary-soft px-2.5 py-1 rounded-full w-fit mb-2">
-          <Sparkles className="w-3.5 h-3.5" />
+          <Users className="w-3.5 h-3.5" />
           <span>St. Xavier&apos;s Campus Leaderboard</span>
         </div>
-        <h1 className="text-xl font-black text-ink tracking-tight">Top Campus Recyclers</h1>
+        <h1 className="text-xl font-black text-ink tracking-tight flex items-center gap-2">
+          <Trophy className="w-5 h-5 text-amber-500" />
+          <span>Top Campus Recyclers</span>
+        </h1>
         <p className="text-xs text-ink-muted">
           Showing opt-in participants. Display name masked for privacy.
         </p>
@@ -40,10 +41,10 @@ export default function StudentLeaderboardPage() {
           </div>
         </div>
 
-        {/* Rank 1 (Featured) */}
+        {/* Rank 1 (Featured) with Trophy */}
         <div className="bg-brand-primary-soft/60 rounded-2xl border-2 border-brand-primary-strong p-3 flex flex-col items-center justify-between shadow-xs -mt-2">
-          <div className="w-9 h-9 rounded-full bg-amber-400 text-amber-950 font-black text-sm flex items-center justify-center mb-1 shadow-xs">
-            🏆
+          <div className="w-9 h-9 rounded-full bg-amber-400 text-amber-950 flex items-center justify-center mb-1 shadow-xs">
+            <Trophy className="w-5 h-5" />
           </div>
           <div className="font-extrabold text-xs text-ink truncate w-full">{leaders[0].name}</div>
           <div className="text-sm font-black text-brand-primary-strong mt-1 tabular-nums">

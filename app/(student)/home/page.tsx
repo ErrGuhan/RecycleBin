@@ -253,21 +253,12 @@ export default function StudentHomePage() {
         </div>
       )}
 
-      {/* Signature Bottle Progress */}
-      <BottleProgress
-        percentage={progressPercent}
-        currentPoints={points}
-        nextTierPoints={nextTierPoints}
-        currentTierName={currentTierName}
-        nextTierName={nextTierName}
-      />
-
-      {/* Visual Stats Summary Cards */}
+      {/* Two-Icon Stat Row sits ABOVE the bottle-fill tier visual (BUILD_PROMPT.md §8.6 #2) */}
       <div className="grid grid-cols-2 gap-3">
         {/* Pending Card */}
         <div className="bg-surface rounded-2xl p-4 border border-line shadow-xs">
           <div className="flex items-center gap-1.5 text-xs font-bold text-amber-800 mb-1">
-            <Clock className="w-4 h-4 text-amber-600" />
+            <Clock className="w-4 h-4 text-[#B45309]" />
             <span>Pending Drops</span>
           </div>
           <div className="text-2xl font-black text-ink tabular-nums">
@@ -281,7 +272,7 @@ export default function StudentHomePage() {
         {/* Verified Card */}
         <div className="bg-surface rounded-2xl p-4 border border-line shadow-xs">
           <div className="flex items-center gap-1.5 text-xs font-bold text-emerald-800 mb-1">
-            <CheckCircle2 className="w-4 h-4 text-emerald-600" />
+            <CheckCircle2 className="w-4 h-4 text-[#00796B]" />
             <span>Verified Drops</span>
           </div>
           <div className="text-2xl font-black text-ink tabular-nums">
@@ -292,6 +283,15 @@ export default function StudentHomePage() {
           </p>
         </div>
       </div>
+
+      {/* Signature Bottle Progress */}
+      <BottleProgress
+        percentage={progressPercent}
+        currentPoints={points}
+        nextTierPoints={nextTierPoints}
+        currentTierName={currentTierName}
+        nextTierName={nextTierName}
+      />
 
       {/* Activity Section */}
       <div className="bg-surface rounded-2xl border border-line p-4 shadow-xs space-y-3">

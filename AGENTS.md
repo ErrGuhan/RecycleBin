@@ -44,12 +44,13 @@ This is an operations and accounting portal, not the company's marketing website
 
 ## 5. Brand and UI rules
 - The brand is **Bisleri**. Use **only** the official logo files the client places in `/public/brand/` (`logo.svg`, `logo-white.svg`, `favicon.png`). Never redraw, trace, recolour, stretch or recreate the logo. If a file is missing, render a plain text placeholder and add it to Open questions.
-- Colours, radii and fonts come from design tokens (CSS variables) defined once in `app/globals.css`. No hard-coded hex values in components.
+- Colours, type sizes, spacing and radii come from the design tokens (CSS variables) defined once in `app/globals.css` and specified in full in `BUILD_PROMPT.md` §8, including the status, plastic-type and tier colour sets. No hard-coded hex values or arbitrary pixel spacing in components.
+- Prefer icons, symbols and small diagrams over dense paragraphs on working screens — see `BUILD_PROMPT.md` §8.5-8.6 for the icon library, the concept map and where each diagram belongs. Not every screen needs one (the FAQ stays text); use judgement, and add new placements to §8 rather than inventing them ad hoc.
 - Brand-claim copy (anything about Bisleri, its programmes or its results) must come from the client. Use `[CLIENT TO CONFIRM]` placeholders. Do not invent claims or statistics.
 - Do not copy Bisleri's trade dress (label layouts, bottle silhouette, taglines). Use only the logo and the colour tokens the client supplies. Any bottle illustration must be an original simple outline.
 - Mobile-first: the main journey is a student on a phone, outdoors, on mobile data, one-handed. Touch targets at least 44 px, primary action in the lower half of the screen, no horizontal scrolling.
 - Accessibility: WCAG AA contrast, visible keyboard focus, labels on every input, `prefers-reduced-motion` respected. Never put white text on the light brand green; use the strong shade.
-- Motion only where it confirms an action (submit success, status change, tier progress). No decorative scroll animations, no hover effects on every card.
+- Motion only where it confirms an action or a state change — the specific list of moments and effects is `BUILD_PROMPT.md` §8.7. No decorative scroll animations, no hover effects on every card, no effect outside that list without adding it there first.
 - UI text is plain, sentence-case, active-voice English. Buttons say what will happen ("Save entry", not "Submit"). Errors say what happened and what to do next. Keep all strings in `messages/en.json` so other languages can be added later.
 
 ## 6. Code conventions

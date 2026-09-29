@@ -85,16 +85,16 @@ export default function AdminAuditPage() {
   const getActionIcon = (action: AuditItem['action']) => {
     switch (action) {
       case 'batch_finalize':
-        return <Scale className="w-5 h-5 text-emerald-700" />;
+        return <Scale className="w-5 h-5 text-flow-verify" />;
       case 'qr_rotate':
-        return <RotateCw className="w-5 h-5 text-blue-700" />;
+        return <RotateCw className="w-5 h-5 text-brand-primary-strong" />;
       case 'rate_update':
-        return <Settings className="w-5 h-5 text-amber-700" />;
+        return <Settings className="w-5 h-5 text-status-pending" />;
       case 'cert_revoke':
-        return <Ban className="w-5 h-5 text-rose-700" />;
+        return <Ban className="w-5 h-5 text-status-rejected" />;
       case 'bin_create':
       default:
-        return <Plus className="w-5 h-5 text-purple-700" />;
+        return <Plus className="w-5 h-5 text-flow-cert" />;
     }
   };
 
@@ -164,7 +164,7 @@ export default function AdminAuditPage() {
           return (
             <div
               key={item.id}
-              className="bg-surface rounded-2xl border border-line p-5 shadow-xs hover:border-brand-primary-strong/40 transition-all text-xs"
+              className="bg-surface rounded-2xl border border-line p-5 shadow-xs hover:border-brand-primary-strong/40 hover:border-l-3 hover:border-l-brand-primary-strong transition-all text-xs"
             >
               <div className="flex flex-col sm:flex-row sm:items-start justify-between gap-3">
                 <div className="flex items-start gap-3">

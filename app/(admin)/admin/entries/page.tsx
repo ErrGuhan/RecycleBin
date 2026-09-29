@@ -245,11 +245,24 @@ export default function AdminEntriesPage() {
         </div>
       </div>
 
-      {/* Entries List / Cards */}
+      {/* Entries List / Cards with Skeleton Shimmer (BUILD_PROMPT.md §8.7) */}
       {isLoading ? (
-        <div className="py-16 text-center text-xs text-ink-muted space-y-2">
-          <div className="w-6 h-6 rounded-full border-2 border-brand-primary-strong border-t-transparent animate-spin mx-auto" />
-          <p>Syncing live database entries...</p>
+        <div className="space-y-3">
+          {[1, 2, 3, 4].map((n) => (
+            <div
+              key={n}
+              className="bg-surface rounded-2xl border border-line p-4 shadow-xs flex items-center justify-between gap-4 animate-pulse"
+            >
+              <div className="flex items-center gap-3.5">
+                <div className="w-11 h-11 rounded-2xl bg-surface-alt shrink-0" />
+                <div className="space-y-2">
+                  <div className="h-4 w-40 bg-surface-alt rounded-md" />
+                  <div className="h-3 w-56 bg-surface-alt rounded-md" />
+                </div>
+              </div>
+              <div className="h-7 w-24 bg-surface-alt rounded-full" />
+            </div>
+          ))}
         </div>
       ) : filteredEntries.length === 0 ? (
         <div className="bg-surface rounded-2xl border border-line p-12 text-center space-y-3">
@@ -270,7 +283,7 @@ export default function AdminEntriesPage() {
           {filteredEntries.map((entry) => (
             <div
               key={entry.id}
-              className="bg-surface rounded-2xl border border-line p-4 shadow-xs flex flex-col md:flex-row md:items-center justify-between gap-4 hover:border-brand-primary-strong/40 transition-colors"
+              className="bg-surface rounded-2xl border border-line p-4 shadow-xs flex flex-col md:flex-row md:items-center justify-between gap-4 hover:border-l-4 hover:border-l-brand-primary-strong hover:bg-surface-alt/40 transition-all cursor-pointer"
             >
               <div className="flex items-start gap-3.5">
                 <div className="w-11 h-11 rounded-2xl bg-brand-primary-soft text-brand-primary-strong flex items-center justify-center shrink-0">

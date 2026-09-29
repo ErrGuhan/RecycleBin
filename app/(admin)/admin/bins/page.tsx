@@ -277,7 +277,7 @@ export default function AdminBinsPage() {
             return (
               <div
                 key={bin.id}
-                className="bg-surface rounded-2xl border border-line p-5 shadow-xs flex flex-col justify-between hover:border-brand-primary-strong/40 transition-colors"
+                className="bg-surface rounded-2xl border border-line p-5 shadow-xs flex flex-col justify-between hover:border-brand-primary-strong/40 hover:border-l-3 hover:border-l-brand-primary-strong transition-all"
               >
                 <div>
                   {/* Top Row: Name and Status */}
@@ -293,8 +293,8 @@ export default function AdminBinsPage() {
                     <span
                       className={`px-2.5 py-1 rounded-full text-[10px] font-bold uppercase tracking-wider shrink-0 ${
                         bin.status === 'active'
-                          ? 'bg-emerald-50 text-emerald-800 border border-emerald-200'
-                          : 'bg-amber-50 text-amber-900 border border-amber-200'
+                          ? 'bg-status-verified-bg text-status-verified border border-status-verified/20'
+                          : 'bg-status-pending-bg text-status-pending border border-status-pending/20'
                       }`}
                     >
                       {bin.status}
@@ -377,7 +377,7 @@ export default function AdminBinsPage() {
                 <div className="mt-4 pt-3 border-t border-line/70 flex items-center justify-between gap-1.5">
                   <Link
                     href={`/admin/verify?bin=${bin.id}`}
-                    className="flex-1 inline-flex items-center justify-center gap-1.5 py-2 px-2.5 rounded-xl bg-brand-primary-strong text-white font-bold text-xs shadow-xs hover:opacity-95"
+                    className="flex-1 inline-flex items-center justify-center gap-1.5 py-2.5 px-3 min-h-[44px] rounded-xl bg-brand-primary-strong text-white font-bold text-xs shadow-xs hover:opacity-95"
                   >
                     <Scale className="w-3.5 h-3.5" />
                     <span>Weigh Bin</span>
@@ -387,7 +387,7 @@ export default function AdminBinsPage() {
                     href={`/api/pdf/plate/${bin.code}`}
                     target="_blank"
                     rel="noopener noreferrer"
-                    className="p-2 min-h-[40px] min-w-[40px] rounded-xl border border-line bg-surface hover:bg-surface-alt text-ink font-semibold flex items-center justify-center"
+                    className="p-2 min-h-[44px] min-w-[44px] rounded-xl border border-line bg-surface hover:bg-surface-alt text-ink font-semibold flex items-center justify-center"
                     title="Download Printable Plate (PDF)"
                   >
                     <Download className="w-4 h-4 text-brand-primary-strong" />
@@ -396,7 +396,7 @@ export default function AdminBinsPage() {
                   <button
                     type="button"
                     onClick={() => handleRotateCode(bin.id)}
-                    className="p-2 min-h-[40px] min-w-[40px] rounded-xl border border-line bg-surface hover:bg-surface-alt text-ink font-semibold flex items-center justify-center"
+                    className="p-2 min-h-[44px] min-w-[44px] rounded-xl border border-line bg-surface hover:bg-surface-alt text-ink font-semibold flex items-center justify-center"
                     title="Rotate QR Code"
                   >
                     <RotateCw className="w-4 h-4 text-ink-muted" />
@@ -405,7 +405,7 @@ export default function AdminBinsPage() {
                   <button
                     type="button"
                     onClick={() => handleToggleStatus(bin.id)}
-                    className="p-2 min-h-[40px] min-w-[40px] rounded-xl border border-line bg-surface hover:bg-surface-alt text-ink font-semibold flex items-center justify-center"
+                    className="p-2 min-h-[44px] min-w-[44px] rounded-xl border border-line bg-surface hover:bg-surface-alt text-ink font-semibold flex items-center justify-center"
                     title="Toggle Maintenance Mode"
                   >
                     <AlertTriangle

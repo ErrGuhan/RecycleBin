@@ -153,10 +153,19 @@ Views: `student_totals`, `bin_pending`, `campus_daily_stats`.
 
 ## 8. Brand and design system
 
-- The brand is **Bisleri**. Use the logo only from `/public/brand/`. Colour values below come from a third-party palette listing (aqua green) and Bisleri's own note that its label moved from blue to aqua green in 2006. **Replace them with the official brand-guide values when the client supplies them.** Tokens make that a one-file change.
+This section is the single source of truth for tokens, icons, diagrams and motion. Section 14 ("Verification and polish pass") audits the build against it — don't let code drift from what's written here, and don't add a colour, icon or effect that isn't in this section without adding it here first.
+
+### 8.1 Brand colours (starting values)
+
+The brand is **Bisleri**. Use the logo only from `/public/brand/`. Colour values below come from a third-party palette listing (aqua green) and Bisleri's own note that its label moved from blue to aqua green in 2006. **Replace them with the official brand-guide values when the client supplies them.** Tokens make that a one-file change.
+
+### 8.2 Full token set
+
+All colour, type and spacing values live once in `app/globals.css`. No hard-coded hex values or pixel sizes anywhere else.
 
 ```css
 :root {
+  /* Brand — replace with official brand-guide values when supplied */
   --brand-primary: #00B3A1;        /* aqua green: fills, graphics, accents only */
   --brand-primary-strong: #00796B; /* buttons and links with white text (about 5.3:1) */
   --brand-primary-soft: #E0F5F2;   /* tinted backgrounds */
@@ -166,17 +175,116 @@ Views: `student_totals`, `bin_pending`, `campus_daily_stats`.
   --surface-alt: #F4FAF9;
   --line: #D5E6E3;
   --warn: #B45309;  --danger: #B42318;  --info: #0B5FA5;
+
+  /* Status — entry lifecycle. Each one always pairs with its own icon (8.5); never colour alone */
+  --status-pending: var(--warn);                   /* Clock */
+  --status-verified: var(--brand-primary-strong);  /* CheckCircle2 */
+  --status-rejected: var(--danger);                /* XCircle */
+  --status-cancelled: #6B7280;                     /* Ban */
+
+  /* Plastic type — one set, reused in badges, icons and every chart */
+  --type-pet-small: var(--brand-primary-strong);
+  --type-pet-medium: #2D6FA6;
+  --type-pet-large: #A65A2E;
+  --type-rigid-other: #6B4C8A;
+
+  /* Tier — decorative/informational only. Never used for a clickable action */
+  --tier-bronze: #A9673A;
+  --tier-silver: #8A94A6;
+  --tier-gold: #C79A3D;
+  --tier-platinum: #7C8CA8;
+
+  /* Type scale — Manrope for UI, Fraunces (serif) only on certificates */
+  --font-display: 2.5rem;  --lh-display: 1.1;   --ls-display: -0.01em;  /* marketing hero only */
+  --font-h1: 2rem;         --lh-h1: 1.2;        --ls-h1: -0.01em;
+  --font-h2: 1.5rem;       --lh-h2: 1.25;       --ls-h2: -0.005em;
+  --font-h3: 1.125rem;     --lh-h3: 1.35;
+  --font-body: 1rem;       --lh-body: 1.5;
+  --font-small: 0.875rem;  --lh-small: 1.4;     --ls-small: 0.01em;
+  --font-label: 0.75rem;   --lh-label: 1.3;     --ls-label: 0.02em;     /* tags, chips — sentence case, never all-caps */
+
+  /* Spacing — 4px grid. No arbitrary padding/margin/gap values outside this list */
+  --space-1: 4px; --space-2: 8px; --space-3: 12px; --space-4: 16px;
+  --space-6: 24px; --space-8: 32px; --space-12: 48px; --space-16: 64px;
 }
 ```
 
-- **Contrast:** `--brand-primary` is about 2.6:1 on white, so never use it for text or as a background for white text. Add a Vitest test that checks contrast for every token pair used.
-- **Type:** Manrope (400-800) via `next/font` for all UI. Fraunces (serif) only on certificates. Line length under 70 characters, tabular numerals for counts and points.
-- **Feel:** calm, clean, white-dominant, green used as the signal colour. Generous spacing. Radius scale: 8 px inputs and buttons, 16 px sheets, full for pills. One soft shadow, only on floating sheets. Use lists and tables for tabular content instead of identical card grids.
-- **The one memorable element:** on Student Home, tier progress is a **bottle that fills**. Use an original, simple bottle-outline SVG (not Bisleri's bottle or label). Animate once on load and when points change; respect reduced motion.
-- **Status chips:** Pending (amber), Verified (green), Rejected (red), Cancelled (grey). Always icon plus text, never colour alone.
-- **Student screens:** single column, primary button anchored near the bottom, stepper buttons at least 56 px.
-- **Admin:** dense but calm; sticky table headers; filters in a top bar; keyboard friendly. The Verify screen is a focused four-step flow: pick bin, weigh, review, confirm.
-- **Certificate:** A4 landscape, white, thin brand-green frame, official logo top-left, Fraunces for title and name, a simple vector tier emblem, text from settings with placeholders `{name} {tier} {items} {kg} {campus} {program} {date}`, signatory block `[CLIENT TO CONFIRM]`, certificate number and a QR to `/verify/{no}`. "kg" is labelled as an estimate (verified items x average grams).
+- **Contrast:** `--brand-primary` is about 2.6:1 on white, so never use it for text or as a background for white text. Add a Vitest test that checks contrast for every token pair actually used, including the new status/type/tier tokens on every background they appear on.
+- **Two greys that must stay distinct:** `--status-cancelled` and `--tier-platinum` are both muted greys. Never rely on the colour difference alone — a cancelled entry always shows the `Ban` icon, and every tier badge always shows its emblem shape (8.8), so the two are never distinguished by hue alone.
+- **Plastic-type and tier colours are starting values,** not a brand requirement. Adjust them freely as long as they pass the contrast test and stay distinct from the status colours (a category badge should never be mistaken for a status chip).
+
+### 8.3 Typography rules
+
+Line length under 70 characters. Sentence case everywhere; never Title Case or ALL CAPS, including on chips and labels — use `--font-label` (small size + weight + a touch of letter-spacing) to give a tag presence instead of capitalising it. Every number that represents a count, weight or points value (item counts, kg, ledger totals, dashboard stats) uses `font-variant-numeric: tabular-nums` so digits don't jitter as they change.
+
+### 8.4 Spacing and alignment
+
+Everything — padding, margins, gaps between an icon and its label, the space between sections — comes from the `--space-*` scale in 8.2. Configure Tailwind's spacing scale to match it and treat any arbitrary value (`p-[13px]`, `gap-[7px]`) as a bug to fix, not a style choice. Icon and label are always vertically centred with `--space-2` (8px) between them; an inline icon is sized to about 1.25× the line-height of the text next to it, rounded to the nearest even pixel. Card and section padding is `--space-4` on mobile and `--space-6` on desktop, consistently — the verification pass (section 14) checks this page by page.
+
+### 8.5 Icons
+
+Use **lucide-react** throughout (MIT-licensed, tree-shakeable, one consistent outline style). Before using an icon, confirm the named export exists in the installed version — don't guess a name. Concept map (use these unless a screen's own text makes something clearer):
+
+| Concept | Icon |
+|---|---|
+| Scan a bin's QR | `QrCode` (marketing), `ScanQrCode` (bin page) |
+| Sign in / sign out | `LogIn` / `LogOut` |
+| Student profile / account | `User` |
+| Bin location | `MapPin` |
+| Add / remove an item (stepper) | `Plus` / `Minus` |
+| Status: pending / verified / rejected / cancelled | `Clock` / `CheckCircle2` / `XCircle` / `Ban` |
+| Admin: weigh the bin | `Weight` |
+| Admin: attach a scale photo | `Camera` |
+| History / recent activity | `History` |
+| Certificates and tiers | `Award`; `Trophy` for the top tier and the leaderboard |
+| Participants / leaderboard | `Users` |
+| Reports and dashboard stats | `BarChart3` |
+| Date range | `Calendar` |
+| Export (CSV/PDF) | `Download` |
+| Settings | `Settings` |
+| Privacy and security | `ShieldCheck` |
+| Audit log | `FileText` |
+| Help / FAQ | `HelpCircle` |
+| Recycling motif (how it works, empty states) | `Recycle` |
+
+### 8.6 Where diagrams and icons replace text
+
+Rule of thumb: on a **working screen** (not the legal/marketing pages), more than about two sentences of static explanatory copy should become an icon row, a diagram or a chart instead. Concretely:
+
+1. **How it works** (landing + `/how-it-works`): a 3-step icon row — drop (`Recycle`) → scan (`ScanQrCode`) → log the count (`Plus`/`Minus`) — replacing plain prose. Numbered, because it genuinely is a sequence.
+2. **Student Home:** a two-icon stat row (`Clock` = pending items, `CheckCircle2` = verified items) sits above the bottle-fill tier visual (8.8) instead of a paragraph describing the split.
+3. **Admin Verify, decision screen:** expected-vs-weighed is a two-segment horizontal bar with a `Weight` icon and the numbers beside it, not a written explanation of the ratio.
+4. **Admin Verify, whole flow:** a 4-step tracker (Bin → Weigh → Review → Confirm) at the top so the admin always sees where they are.
+5. **Admin Dashboard:** icon-labelled stat tiles (`Recycle` items, `Users` active students, `Award` points issued, `Clock` pending) instead of bare numbers; bin and plastic-type breakdowns as small bar/donut charts (Recharts) using the `--type-*` colours, with the exact figures still available in a table.
+6. **Certificates:** small inline icons next to each stat (items, date, campus) for scannability; each tier badge keeps its own emblem shape (8.8), never colour alone.
+7. **Empty states, everywhere:** one icon plus one short line. Never a paragraph.
+8. **FAQ:** stays as text — question-and-answer genuinely is a text format. Add a `HelpCircle` per question for scannability, but don't force a diagram where prose is already the right tool.
+
+### 8.7 Motion and interaction
+
+Every effect below answers a state change or a tap — never decorative, never on a timer, never on scroll. Wrap all of it in `prefers-reduced-motion` and skip it there. The bottle-fill (8.8) is the app's one bold moment; everything else stays quiet.
+
+| Moment | Effect |
+|---|---|
+| Stepper `+`/`-` pressed | Button scales to 0.96 on press; the count briefly highlights |
+| Entry saved | A checkmark draws in (SVG stroke animation) and the pending total ticks up |
+| Status changes (e.g. pending → verified) | The chip cross-fades and swaps icon, not just colour |
+| A tier is crossed | The bottle-fill gets one pulse/glow — no confetti, no separate effect elsewhere |
+| Verify decision screen loads | The expected-vs-weighed bar fills in once, driven by the fetched data |
+| A list is loading | Skeleton shimmer, not a spinner |
+| Admin table row | Hover highlight; the selected row gets a left accent bar in `--brand-primary-strong` |
+| A new certificate is issued | A small pulsing "New" badge until the student views it |
+| Any save or action confirmation | A toast slides in and auto-dismisses; it never blocks the screen |
+| Keyboard focus | Always a visible ring in `--brand-primary-strong` on every interactive element |
+
+No decorative scroll animations, no hover effect on every card, no effect outside this table without adding it here first.
+
+### 8.8 Screen-specific notes
+
+- **The signature element:** on Student Home, tier progress is a **bottle that fills**. Use an original, simple bottle-outline SVG (not Bisleri's bottle or label). Animate once on load, when points change, and with the one tier-crossing pulse from 8.7; respect reduced motion.
+- **Student screens:** single column, primary button anchored near the bottom, stepper buttons at least 56 px, generous spacing from 8.4.
+- **Admin:** dense but calm; sticky table headers; filters in a top bar; keyboard friendly. Radius scale: 8 px inputs and buttons, 16 px sheets, full for pills. One soft shadow, only on floating sheets. Use lists and tables for tabular content instead of identical card grids, except where 8.6 calls for a chart.
+- **Certificate:** A4 landscape, white, thin brand-green frame, official logo top-left, Fraunces for title and name, a distinct vector emblem shape per tier in its `--tier-*` colour (bronze/silver/gold/platinum are never told apart by colour alone), text from settings with placeholders `{name} {tier} {items} {kg} {campus} {program} {date}`, signatory block `[CLIENT TO CONFIRM]`, certificate number and a QR to `/verify/{no}`. "kg" is labelled as an estimate (verified items x average grams).
 
 ## 9. Copy (use as written; items in brackets come from the client)
 
@@ -250,6 +358,8 @@ Views: `student_totals`, `bin_pending`, `campus_daily_stats`.
 - Landing, how it works, rewards, FAQ, privacy and terms drafts, consent step, age gate, account export and delete, PWA manifest, favicon, metadata and social image.
 - Done when: Lighthouse mobile scores are at least 90 (performance, accessibility, best practices, SEO) on `/` and `/b/[code]`.
 
+**Phase 6.5: Design refinement and verification pass** — run `VERIFY_AND_POLISH_PROMPT.md` (see section 14) here, before Phase 7. It audits every screen against this document, applies the icon/diagram/colour/motion system from section 8, and reports what it found and fixed.
+
 **Phase 7: Hardening and release**
 - Security checklist (RLS review, headers and CSP, rate limits, `next` validation, service-role usage), error-monitoring hook, a 100-concurrent-submit sanity test, seed removal, Vercel + Supabase deploy guide, pilot checklist (3 bins, 2 weeks, calibration steps).
 - Done when: a deploy preview passes the smoke test and `docs/runbook.md` is complete.
@@ -280,3 +390,7 @@ Use the Supabase CLI with local Docker if available; otherwise a hosted dev proj
 8. Support email and phone, and the grievance contact for the privacy notice.
 9. Under-18 policy (needs legal input).
 10. Does the college want the leaderboard?
+
+## 14. Verification and polish pass
+
+A separate prompt, `VERIFY_AND_POLISH_PROMPT.md`, audits the build against this document and applies the design system in section 8 everywhere it belongs. Run it as Phase 6.5 (after Phase 6, before Phase 7) on a first build, or at any later point to audit and refresh an existing one. It does not add scope beyond section 8 — if it finds something this document should cover but doesn't, it lists that as an open question here rather than inventing an answer.

@@ -42,4 +42,27 @@ describe('Design Tokens & WCAG Contrast Verification', () => {
     expect(getContrastRatio(TOKENS.danger.hex, TOKENS.surface.hex)).toBeGreaterThanOrEqual(4.5);
     expect(getContrastRatio(TOKENS.info.hex, TOKENS.surface.hex)).toBeGreaterThanOrEqual(4.5);
   });
+
+  it('proves lifecycle status tokens have accessible contrast on white surface', () => {
+    expect(getContrastRatio(TOKENS.statusPending.hex, TOKENS.surface.hex)).toBeGreaterThanOrEqual(4.5);
+    expect(getContrastRatio(TOKENS.statusVerified.hex, TOKENS.surface.hex)).toBeGreaterThanOrEqual(4.5);
+    expect(getContrastRatio(TOKENS.statusRejected.hex, TOKENS.surface.hex)).toBeGreaterThanOrEqual(4.5);
+    // Cancelled status is a secondary muted grey >= 4.0:1
+    expect(getContrastRatio(TOKENS.statusCancelled.hex, TOKENS.surface.hex)).toBeGreaterThanOrEqual(4.0);
+  });
+
+  it('proves 5-step lifecycle flow tokens are defined and mapped correctly', () => {
+    expect(TOKENS.flowEntry.hex).toBe(TOKENS.brandPrimaryStrong.hex); // Teal
+    expect(TOKENS.flowPending.hex).toBe(TOKENS.statusPending.hex);     // Amber
+    expect(TOKENS.flowVerify.hex).toBe(TOKENS.info.hex);              // Blue
+    expect(TOKENS.flowPoints.hex).toBe(TOKENS.statusVerified.hex);     // Green
+    expect(TOKENS.flowCert.hex).toBe(TOKENS.typeRigidOther.hex);       // Purple (#6B4C8A)
+  });
+
+  it('proves distinctness between status-cancelled and tier-platinum tokens', () => {
+    // Both are greys, but have distinct hex codes and roles
+    expect(TOKENS.statusCancelled.hex).not.toBe(TOKENS.tierPlatinum.hex);
+    expect(TOKENS.statusCancelled.role).toBe('status');
+    expect(TOKENS.tierPlatinum.role).toBe('accent-fill');
+  });
 });

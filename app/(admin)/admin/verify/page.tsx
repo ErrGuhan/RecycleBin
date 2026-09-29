@@ -3,7 +3,7 @@
 import React, { useState, useEffect } from 'react';
 import Link from 'next/link';
 import {
-  Scale,
+  Weight,
   MapPin,
   CheckCircle2,
   AlertTriangle,
@@ -28,6 +28,12 @@ export default function AdminVerifyPage() {
   const [currentStep, setCurrentStep] = useState<1 | 2 | 3 | 4>(1);
   const [binsList, setBinsList] = useState<BinToVerify[]>([]);
   const [isLoading, setIsLoading] = useState(true);
+  const [toastMessage, setToastMessage] = useState<string | null>(null);
+
+  const showToast = (msg: string) => {
+    setToastMessage(msg);
+    setTimeout(() => setToastMessage(null), 3500);
+  };
 
   const [selectedBin, setSelectedBin] = useState<BinToVerify>({
     id: 'bin-1',
@@ -153,6 +159,7 @@ export default function AdminVerifyPage() {
   const handleFinalize = async (type: 'approved' | 'scaled') => {
     setDecision(type);
     setCurrentStep(4);
+    showToast(type === 'approved' ? 'Batch verified & points credited in full.' : 'Batch scaled & points credited.');
 
     try {
       const supabase = createClient();
@@ -201,12 +208,20 @@ export default function AdminVerifyPage() {
   };
 
   return (
-    <div className="max-w-3xl mx-auto space-y-6">
+    <div className="max-w-3xl mx-auto space-y-6 relative">
+      {/* Toast Notification (BUILD_PROMPT.md §8.7) */}
+      {toastMessage && (
+        <div className="fixed top-5 left-1/2 -translate-x-1/2 z-50 px-4 py-2.5 rounded-xl bg-ink text-white text-xs font-semibold shadow-lg flex items-center gap-2 animate-in fade-in slide-in-from-top duration-200">
+          <CheckCircle2 className="w-4 h-4 text-emerald-400 shrink-0" />
+          <span>{toastMessage}</span>
+        </div>
+      )}
+
       {/* Title */}
       <div className="flex items-center justify-between">
         <div>
           <div className="flex items-center gap-2 text-xs font-bold text-brand-primary-strong mb-1">
-            <Scale className="w-4 h-4" />
+            <Weight className="w-4 h-4 text-[#0B5FA5]" />
             <span>Weighing &amp; Cut-Off Engine</span>
           </div>
           <h1 className="text-2xl font-black text-ink tracking-tight">Verify Bin Collection</h1>
@@ -219,13 +234,13 @@ export default function AdminVerifyPage() {
         </Link>
       </div>
 
-      {/* Progress Stepper with Clean Icons */}
+      {/* Progress Stepper: Bin -> Weigh -> Review -> Confirm (BUILD_PROMPT.md §8.6 #4) */}
       <div className="grid grid-cols-4 gap-2 text-center text-xs">
         {[
-          { step: 1, label: 'Pick Bin', icon: MapPin },
-          { step: 2, label: 'Weigh Scale', icon: Scale },
+          { step: 1, label: 'Bin', icon: MapPin },
+          { step: 2, label: 'Weigh', icon: Weight },
           { step: 3, label: 'Review', icon: AlertTriangle },
-          { step: 4, label: 'Finalize', icon: CheckCircle2 },
+          { step: 4, label: 'Confirm', icon: CheckCircle2 },
         ].map((item) => {
           const Icon = item.icon;
           const isActive = currentStep === item.step;
@@ -392,18 +407,51 @@ export default function AdminVerifyPage() {
         <div className="bg-surface rounded-2xl border border-line p-5 shadow-xs space-y-5">
           <h2 className="font-extrabold text-base text-ink">Batch Tolerance Review</h2>
 
-          <div className="p-4 rounded-xl bg-surface-alt border border-line space-y-3">
-            <div className="flex justify-between items-center text-sm font-bold">
-              <span>Actual vs Expected Ratio:</span>
-              <span className="tabular-nums font-black text-brand-primary-strong">{ratioPercentage}%</span>
+          {/* Two-segment horizontal comparison bar with Weight icon (BUILD_PROMPT.md §8.6 #3) */}
+          <div className="p-4 rounded-xl bg-surface-alt border border-line space-y-4">
+            <div className="flex items-center justify-between text-xs">
+              <span className="font-bold text-ink uppercase tracking-wider flex items-center gap-1.5">
+                <Weight className="w-4 h-4 text-[#0B5FA5]" />
+                <span>Scale Comparison (Expected vs Weighed)</span>
+              </span>
+              <span className="tabular-nums font-black text-sm text-brand-primary-strong">
+                Ratio: {ratioPercentage}%
+              </span>
             </div>
-            <div className="w-full h-3 rounded-full bg-line overflow-hidden">
-              <div
-                className="h-full bg-brand-primary-strong transition-all duration-300"
-                style={{ width: `${Math.min(100, ratioPercentage)}%` }}
-              />
+
+            {/* Two-segment Bar: Weighed (Blue) vs Expected (Green) */}
+            <div className="space-y-2">
+              <div className="w-full h-4 rounded-full bg-slate-200 overflow-hidden flex shadow-inner">
+                <div
+                  className="h-full bg-[#0B5FA5] transition-all duration-500 rounded-l-full"
+                  style={{
+                    width: `${Math.min(100, Math.round((netGrams / (Math.max(netGrams, expectedGrams) || 1)) * 100))}%`,
+                  }}
+                  title={`Net Weighed: ${netGrams}g`}
+                />
+                <div
+                  className="h-full bg-emerald-600/80 transition-all duration-500 rounded-r-full"
+                  style={{
+                    width: `${Math.max(0, 100 - Math.min(100, Math.round((netGrams / (Math.max(netGrams, expectedGrams) || 1)) * 100)))}%`,
+                  }}
+                  title={`Expected: ${expectedGrams}g`}
+                />
+              </div>
+
+              {/* Exact numbers beside/below the bar */}
+              <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-2 text-xs font-mono pt-1">
+                <div className="flex items-center gap-1.5 text-[#0B5FA5] font-bold">
+                  <span className="w-2.5 h-2.5 rounded-full bg-[#0B5FA5] shrink-0" />
+                  <span className="tabular-nums">Net Weighed: {netGrams}g ({(netGrams / 1000).toFixed(2)}kg)</span>
+                </div>
+                <div className="flex items-center gap-1.5 text-emerald-800 font-bold">
+                  <span className="w-2.5 h-2.5 rounded-full bg-emerald-600 shrink-0" />
+                  <span className="tabular-nums">Expected: {expectedGrams}g ({selectedBin.pending_items} items)</span>
+                </div>
+              </div>
             </div>
-            <p className="text-xs text-ink-muted">
+
+            <p className="text-xs text-ink-muted border-t border-line/60 pt-2.5">
               {evaluation.status === 'approve_all'
                 ? 'Within ±25% tolerance threshold. Full points can be safely awarded.'
                 : 'Outside tolerance threshold. Scale factor recommended to prevent fraud.'}

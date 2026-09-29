@@ -21,9 +21,13 @@ export default function AdminReportsPage() {
   const [timeRange, setTimeRange] = useState('ay_2026');
   const [copiedFormula, setCopiedFormula] = useState(false);
   const [syncStatus, setSyncStatus] = useState<string | null>(null);
+  const [origin, setOrigin] = useState('https://YOUR-APP.vercel.app');
+
+  useEffect(() => {
+    setOrigin(window.location.origin);
+  }, []);
 
   const handleCopyFormula = () => {
-    const origin = typeof window !== 'undefined' ? window.location.origin : 'http://localhost:3000';
     const formula = `=IMPORTDATA("${origin}/api/sheets/feed?type=entries")`;
     navigator.clipboard.writeText(formula);
     setCopiedFormula(true);
@@ -333,7 +337,7 @@ export default function AdminReportsPage() {
 
           <div className="flex items-center gap-2">
             <div className="flex-1 font-mono text-xs bg-surface p-2.5 rounded-xl border border-line overflow-x-auto text-emerald-900 font-bold select-all">
-              {`=IMPORTDATA("${typeof window !== 'undefined' ? window.location.origin : 'https://YOUR-APP.vercel.app'}/api/sheets/feed?type=entries")`}
+              {`=IMPORTDATA("${origin}/api/sheets/feed?type=entries")`}
             </div>
             <button
               type="button"

@@ -1,9 +1,25 @@
 import React from 'react';
 import Link from 'next/link';
-import { ArrowLeft, Award, Recycle } from 'lucide-react';
+import { ArrowLeft, Recycle } from 'lucide-react';
 import { DEFAULT_TIERS, DEFAULT_PLASTIC_TYPES } from '@/lib/domain/points';
+import { TierEmblem } from '@/components/ui/TierEmblem';
+import { PlasticCategoryIcon } from '@/components/plastic/PlasticCategoryIcon';
 
 export default function RewardsPage() {
+  const tierColorMap: Record<string, { bgBadge: string; textBadge: string; border: string }> = {
+    bronze: { bgBadge: 'bg-[#A9673A]/10', textBadge: 'text-[#A9673A]', border: 'border-[#A9673A]/30' },
+    silver: { bgBadge: 'bg-[#8A94A6]/15', textBadge: 'text-[#586478]', border: 'border-[#8A94A6]/30' },
+    gold: { bgBadge: 'bg-[#C79A3D]/10', textBadge: 'text-[#966F1C]', border: 'border-[#C79A3D]/30' },
+    platinum: { bgBadge: 'bg-[#7C8CA8]/15', textBadge: 'text-[#4F5E7B]', border: 'border-[#7C8CA8]/30' },
+  };
+
+  const typeColorMap: Record<string, { bg: string; text: string }> = {
+    pet_small: { bg: 'bg-[#00796B]/10', text: 'text-[#00796B]' },
+    pet_medium: { bg: 'bg-[#2D6FA6]/10', text: 'text-[#2D6FA6]' },
+    pet_large: { bg: 'bg-[#A65A2E]/10', text: 'text-[#A65A2E]' },
+    rigid_other: { bg: 'bg-[#6B4C8A]/10', text: 'text-[#6B4C8A]' },
+  };
+
   return (
     <div className="max-w-4xl mx-auto px-4 sm:px-6 py-10 space-y-12">
       <div>
@@ -22,38 +38,41 @@ export default function RewardsPage() {
         </p>
       </div>
 
-      {/* Tier Cards */}
+      {/* Tier Cards with Distinct Emblems */}
       <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-        {DEFAULT_TIERS.map((tier) => (
-          <div
-            key={tier.key}
-            className="bg-surface rounded-xl border border-line p-6 shadow-xs flex flex-col justify-between"
-          >
-            <div>
-              <div className="flex items-center justify-between mb-4">
-                <span className="text-xs font-semibold uppercase tracking-wider text-brand-primary-strong bg-brand-primary-soft px-2.5 py-0.5 rounded-full">
-                  Tier {tier.sort}
-                </span>
-                <Award className="w-6 h-6 text-brand-primary-strong" />
+        {DEFAULT_TIERS.map((tier) => {
+          const colors = tierColorMap[tier.key] || tierColorMap.bronze;
+          return (
+            <div
+              key={tier.key}
+              className={`bg-surface rounded-xl border p-6 shadow-xs flex flex-col justify-between ${colors.border}`}
+            >
+              <div>
+                <div className="flex items-center justify-between mb-4">
+                  <span className={`text-xs font-bold uppercase tracking-wider px-2.5 py-0.5 rounded-full ${colors.bgBadge} ${colors.textBadge}`}>
+                    Tier {tier.sort} • {tier.name}
+                  </span>
+                  <TierEmblem tier={tier.key} size={28} className="w-7 h-7" />
+                </div>
+                <h2 className="text-2xl font-bold text-ink">{tier.name} Certificate</h2>
+                <div className="mt-3 flex items-baseline gap-2">
+                  <span className="text-3xl font-extrabold text-brand-primary-strong tabular-nums">
+                    {tier.min_points}
+                  </span>
+                  <span className="text-sm text-ink-muted font-medium">lifetime points required</span>
+                </div>
+                <p className="text-xs text-ink-muted mt-3 leading-relaxed">
+                  Equivalent to approximately {Math.round(tier.min_points / 5)} standard PET bottles (approx. {((tier.min_points * 3) / 1000).toFixed(1)} kg of plastic recycled).
+                </p>
               </div>
-              <h2 className="text-2xl font-bold text-ink">{tier.name} Certificate</h2>
-              <div className="mt-3 flex items-baseline gap-2">
-                <span className="text-3xl font-extrabold text-brand-primary-strong tabular-nums">
-                  {tier.min_points}
-                </span>
-                <span className="text-sm text-ink-muted font-medium">lifetime points required</span>
-              </div>
-              <p className="text-xs text-ink-muted mt-3 leading-relaxed">
-                Equivalent to approximately {Math.round(tier.min_points / 5)} standard PET bottles (approx. {((tier.min_points * 3) / 1000).toFixed(1)} kg of plastic recycled).
-              </p>
-            </div>
 
-            <div className="mt-6 pt-4 border-t border-line/60 flex items-center justify-between text-xs text-ink-muted">
-              <span>Official Verifiable PDF</span>
-              <span className="font-semibold text-ink">Issued Once</span>
+              <div className="mt-6 pt-4 border-t border-line/60 flex items-center justify-between text-xs text-ink-muted">
+                <span>Official Verifiable PDF</span>
+                <span className="font-semibold text-ink">Issued Once (Idempotent)</span>
+              </div>
             </div>
-          </div>
-        ))}
+          );
+        })}
       </div>
 
       {/* Plastic Credit Rates */}
@@ -76,15 +95,25 @@ export default function RewardsPage() {
               </tr>
             </thead>
             <tbody className="divide-y divide-line/60">
-              {DEFAULT_PLASTIC_TYPES.map((type) => (
-                <tr key={type.key}>
-                  <td className="py-3 px-4 font-semibold text-ink">{type.label}</td>
-                  <td className="py-3 px-4 text-ink-muted tabular-nums">~{type.avg_grams} g</td>
-                  <td className="py-3 px-4 font-bold text-brand-primary-strong tabular-nums">
-                    {type.points_per_item} pts
-                  </td>
-                </tr>
-              ))}
+              {DEFAULT_PLASTIC_TYPES.map((type) => {
+                const typeStyle = typeColorMap[type.key] || typeColorMap.pet_small;
+                return (
+                  <tr key={type.key}>
+                    <td className="py-3 px-4">
+                      <div className="flex items-center gap-2.5">
+                        <span className={`p-1.5 rounded-lg ${typeStyle.bg} ${typeStyle.text}`}>
+                          <PlasticCategoryIcon typeKey={type.key} className="w-4 h-4" />
+                        </span>
+                        <span className="font-semibold text-ink">{type.label}</span>
+                      </div>
+                    </td>
+                    <td className="py-3 px-4 text-ink-muted tabular-nums">~{type.avg_grams} g</td>
+                    <td className="py-3 px-4 font-bold text-brand-primary-strong tabular-nums">
+                      {type.points_per_item} pts
+                    </td>
+                  </tr>
+                );
+              })}
             </tbody>
           </table>
         </div>

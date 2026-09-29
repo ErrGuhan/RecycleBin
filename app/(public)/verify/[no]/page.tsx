@@ -1,6 +1,7 @@
 import React from 'react';
 import Link from 'next/link';
-import { ShieldCheck, CheckCircle2, Award, Calendar, School, Package, ArrowLeft, AlertCircle } from 'lucide-react';
+import { ShieldCheck, Calendar, School, Package, ArrowLeft, AlertCircle } from 'lucide-react';
+import { TierEmblem } from '@/components/ui/TierEmblem';
 
 interface VerifyPageProps {
   params: Promise<{ no: string }>;
@@ -46,7 +47,7 @@ export default async function CertificateVerifyPage({ params }: VerifyPageProps)
 
       {mockCertificate ? (
         <div className="bg-surface rounded-2xl border-2 border-brand-primary-strong/30 p-6 sm:p-8 shadow-sm space-y-6 relative overflow-hidden">
-          {/* Authenticity Watermark Header */}
+          {/* Authenticity Watermark Header with ShieldCheck */}
           <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 border-b border-line pb-6">
             <div>
               <span className="text-[11px] font-mono uppercase tracking-wider text-ink-muted">
@@ -56,8 +57,8 @@ export default async function CertificateVerifyPage({ params }: VerifyPageProps)
                 {mockCertificate.certificate_no}
               </div>
             </div>
-            <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-emerald-50 border border-emerald-200 text-emerald-800 text-xs font-bold">
-              <CheckCircle2 className="w-4 h-4" />
+            <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-emerald-50 border border-emerald-200 text-emerald-800 text-xs font-bold shadow-2xs">
+              <ShieldCheck className="w-4 h-4 text-emerald-700" />
               <span>Authentic &amp; Valid</span>
             </div>
           </div>
@@ -78,11 +79,17 @@ export default async function CertificateVerifyPage({ params }: VerifyPageProps)
 
             <div className="space-y-1">
               <span className="text-xs text-ink-muted font-medium flex items-center gap-1">
-                <Award className="w-3.5 h-3.5 text-brand-primary-strong" />
                 <span>Milestone Tier</span>
               </span>
-              <div className="font-bold text-base text-brand-primary-strong">
-                {mockCertificate.tier_name}
+              <div className="flex items-center gap-2">
+                <TierEmblem
+                  tier={mockCertificate.tier_name.toLowerCase().replace(' tier', '')}
+                  size={22}
+                  className="w-5 h-5 shrink-0"
+                />
+                <span className="font-bold text-base text-ink">
+                  {mockCertificate.tier_name}
+                </span>
               </div>
             </div>
 

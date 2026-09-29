@@ -263,13 +263,13 @@ export default function AdminAccountingPage() {
 
         {/* Total Revenue */}
         <div className="bg-surface rounded-2xl border border-line p-5 shadow-xs">
-          <div className="w-10 h-10 rounded-xl bg-emerald-100 text-emerald-800 flex items-center justify-center mb-3">
+          <div className="w-10 h-10 rounded-xl bg-status-verified-bg text-status-verified flex items-center justify-center mb-3">
             <TrendingUp className="w-5 h-5" />
           </div>
           <span className="text-[10px] font-bold text-ink-muted uppercase tracking-wider block">
             Sales Revenue
           </span>
-          <div className="text-2xl font-black text-emerald-900 tabular-nums mt-0.5">
+          <div className="text-2xl font-black text-status-verified tabular-nums mt-0.5">
             ₹{(totalRevenuePaise / 100).toLocaleString('en-IN', { minimumFractionDigits: 2 })}
           </div>
           <span className="text-[11px] text-ink-muted mt-1 block">Proceeds from recycled plastic</span>
@@ -285,7 +285,7 @@ export default function AdminAccountingPage() {
           </span>
           <div
             className={`text-2xl font-black tabular-nums mt-0.5 ${
-              netBalancePaise >= 0 ? 'text-emerald-900' : 'text-rose-900'
+              netBalancePaise >= 0 ? 'text-status-verified' : 'text-status-rejected'
             }`}
           >
             ₹{(netBalancePaise / 100).toLocaleString('en-IN', { minimumFractionDigits: 2 })}
@@ -325,14 +325,14 @@ export default function AdminAccountingPage() {
             {records.map((record) => (
               <div
                 key={record.id}
-                className="p-4 flex flex-col sm:flex-row sm:items-center justify-between gap-3 hover:bg-surface-alt/40 transition-colors"
+                className="p-4 flex flex-col sm:flex-row sm:items-center justify-between gap-3 hover:bg-surface-alt/40 hover:border-l-3 hover:border-l-brand-primary-strong transition-all"
               >
                 <div className="flex items-start gap-3">
                   <div
                     className={`w-9 h-9 rounded-xl flex items-center justify-center shrink-0 ${
                       record.type === 'sale'
-                        ? 'bg-emerald-100 text-emerald-800'
-                        : 'bg-rose-100 text-rose-800'
+                        ? 'bg-status-verified-bg text-status-verified'
+                        : 'bg-status-rejected-bg text-status-rejected'
                     }`}
                   >
                     {record.type === 'sale' ? (
@@ -362,7 +362,7 @@ export default function AdminAccountingPage() {
                 <div className="text-right sm:shrink-0 flex sm:flex-col items-center sm:items-end justify-between sm:justify-center">
                   <div
                     className={`text-base font-black tabular-nums ${
-                      record.type === 'sale' ? 'text-emerald-800' : 'text-rose-800'
+                      record.type === 'sale' ? 'text-status-verified' : 'text-status-rejected'
                     }`}
                   >
                     {record.type === 'sale' ? '+' : '-'}₹

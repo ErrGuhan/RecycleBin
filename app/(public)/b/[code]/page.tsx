@@ -105,12 +105,25 @@ export default function BinDropPage({ params }: BinPageProps) {
     loadBin();
   }, [binCode]);
 
+  const [isHighlighting, setIsHighlighting] = useState(false);
+
+  const triggerHighlight = () => {
+    setIsHighlighting(true);
+    setTimeout(() => setIsHighlighting(false), 250);
+  };
+
   const handleIncrement = () => {
-    if (itemsCount < 20) setItemsCount(itemsCount + 1);
+    if (itemsCount < 20) {
+      setItemsCount(itemsCount + 1);
+      triggerHighlight();
+    }
   };
 
   const handleDecrement = () => {
-    if (itemsCount > 1) setItemsCount(itemsCount - 1);
+    if (itemsCount > 1) {
+      setItemsCount(itemsCount - 1);
+      triggerHighlight();
+    }
   };
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -281,13 +294,17 @@ export default function BinDropPage({ params }: BinPageProps) {
                     onClick={handleDecrement}
                     disabled={itemsCount <= 1}
                     aria-label="Decrease quantity"
-                    className="w-13 h-13 rounded-xl bg-surface border border-line text-ink flex items-center justify-center font-bold text-xl hover:bg-surface-alt transition-colors disabled:opacity-30 disabled:cursor-not-allowed shadow-xs focus-visible:outline-2 focus-visible:outline-brand-primary-strong active:scale-95"
+                    className="w-14 h-14 rounded-xl bg-surface border border-line text-ink flex items-center justify-center font-bold text-xl hover:bg-surface-alt transition-transform disabled:opacity-30 disabled:cursor-not-allowed shadow-xs focus-visible:outline-2 focus-visible:outline-brand-primary-strong active:scale-[0.96]"
                   >
                     <Minus className="w-5 h-5" />
                   </button>
 
                   <div className="flex-1 text-center px-4">
-                    <div className="text-3xl font-black text-ink tabular-nums tracking-tight">
+                    <div
+                      className={`text-3xl font-black tabular-nums tracking-tight transition-all duration-150 ${
+                        isHighlighting ? 'text-brand-primary-strong scale-110' : 'text-ink'
+                      }`}
+                    >
                       {itemsCount}
                     </div>
                     <div className="text-[11px] font-semibold text-ink-muted">
@@ -300,7 +317,7 @@ export default function BinDropPage({ params }: BinPageProps) {
                     onClick={handleIncrement}
                     disabled={itemsCount >= 20}
                     aria-label="Increase quantity"
-                    className="w-13 h-13 rounded-xl bg-surface border border-line text-ink flex items-center justify-center font-bold text-xl hover:bg-surface-alt transition-colors disabled:opacity-30 disabled:cursor-not-allowed shadow-xs focus-visible:outline-2 focus-visible:outline-brand-primary-strong active:scale-95"
+                    className="w-14 h-14 rounded-xl bg-surface border border-line text-ink flex items-center justify-center font-bold text-xl hover:bg-surface-alt transition-transform disabled:opacity-30 disabled:cursor-not-allowed shadow-xs focus-visible:outline-2 focus-visible:outline-brand-primary-strong active:scale-[0.96]"
                   >
                     <Plus className="w-5 h-5" />
                   </button>
@@ -356,27 +373,37 @@ export default function BinDropPage({ params }: BinPageProps) {
               </div>
             </form>
           ) : (
-            /* Confirmation State */
+            /* Confirmation State with Animated SVG Stroke Checkmark */
             <div className="py-6 text-center space-y-5">
               {!isCancelled ? (
                 <>
                   <div className="w-16 h-16 rounded-full bg-emerald-50 border-2 border-emerald-200 text-emerald-700 mx-auto flex items-center justify-center shadow-xs">
-                    <CheckCircle2 className="w-9 h-9" />
+                    <svg
+                      className="w-9 h-9 stroke-[#00796B]"
+                      viewBox="0 0 24 24"
+                      fill="none"
+                      strokeWidth="2.5"
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                      aria-label="Entry Saved"
+                    >
+                      <polyline points="20 6 9 17 4 12" />
+                    </svg>
                   </div>
 
                   <div className="space-y-1">
                     <h2 className="text-xl font-black text-ink tracking-tight">
-                      {savedCount} {savedCount === 1 ? 'Item' : 'Items'} Recorded!
+                      {savedCount} {savedCount === 1 ? 'Item' : 'Items'} Saved!
                     </h2>
                     <p className="text-xs text-ink-muted max-w-xs mx-auto">
-                      Points will be awarded as soon as the bin contents are weighed by campus staff.
+                      {en.messages.entry_saved.replace('{count}', String(savedCount))}
                     </p>
                   </div>
 
-                  {/* Clean Status Chip */}
-                  <div className="p-3 rounded-2xl bg-amber-50 border border-amber-200 text-amber-900 text-xs flex items-center justify-center gap-2 font-bold">
-                    <Clock className="w-4 h-4 text-amber-700" />
-                    <span>Pending Bin Scale Weighing</span>
+                  {/* Clean Status Chip with --status-pending */}
+                  <div className="p-3 rounded-2xl bg-[#B45309]/10 border border-[#B45309]/30 text-[#B45309] text-xs flex items-center justify-center gap-2 font-bold">
+                    <Clock className="w-4 h-4 text-[#B45309]" />
+                    <span>{en.status.pending}</span>
                   </div>
 
                   {/* Undo Button */}

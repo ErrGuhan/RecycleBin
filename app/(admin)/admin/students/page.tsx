@@ -11,6 +11,7 @@ import {
   Phone,
 } from 'lucide-react';
 import { createClient } from '@/lib/supabase/client';
+import { TierEmblem } from '@/components/ui/TierEmblem';
 
 interface StudentRosterItem {
   id: string;
@@ -129,13 +130,13 @@ export default function AdminStudentsPage() {
   const getTierColor = (tier: string) => {
     switch (tier) {
       case 'Platinum':
-        return 'bg-purple-100 text-purple-900 border-purple-200';
+        return 'bg-tier-platinum-bg text-tier-platinum border-tier-platinum/30';
       case 'Gold':
-        return 'bg-amber-100 text-amber-900 border-amber-200';
+        return 'bg-tier-gold-bg text-tier-gold border-tier-gold/30';
       case 'Silver':
-        return 'bg-slate-100 text-slate-900 border-slate-300';
+        return 'bg-tier-silver-bg text-tier-silver border-tier-silver/30';
       case 'Bronze':
-        return 'bg-amber-50 text-amber-800 border-amber-200';
+        return 'bg-tier-bronze-bg text-tier-bronze border-tier-bronze/30';
       default:
         return 'bg-surface-alt text-ink-muted border-line';
     }
@@ -241,7 +242,7 @@ export default function AdminStudentsPage() {
           {filtered.map((student) => (
             <div
               key={student.id}
-              className="bg-surface rounded-2xl border border-line p-4 shadow-xs flex flex-col justify-between hover:border-brand-primary-strong/40 transition-colors"
+              className="bg-surface rounded-2xl border border-line p-4 shadow-xs flex flex-col justify-between hover:border-brand-primary-strong/40 hover:border-l-3 hover:border-l-brand-primary-strong transition-all"
             >
               <div className="space-y-3">
                 {/* Header: Name, Roll, Tier */}
@@ -257,11 +258,12 @@ export default function AdminStudentsPage() {
                   </div>
 
                   <span
-                    className={`px-2 py-0.5 rounded-full text-[10px] font-bold uppercase tracking-wider border shrink-0 ${getTierColor(
+                    className={`inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-[10px] font-bold uppercase tracking-wider border shrink-0 ${getTierColor(
                       student.tier
                     )}`}
                   >
-                    {student.tier}
+                    <TierEmblem tier={student.tier} size={12} />
+                    <span>{student.tier}</span>
                   </span>
                 </div>
 

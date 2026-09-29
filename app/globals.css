@@ -1,25 +1,63 @@
 @import "tailwindcss";
 
 :root {
-  --brand-primary: #009688;        /* aqua green: fills, graphics, accents only */
-  --brand-primary-strong: #005A4E; /* high-contrast emerald buttons/links (>7.5:1 contrast) */
-  --brand-primary-soft: #E6F7F4;   /* clean mint tinted backgrounds */
-  --ink: #061917;                  /* deep dark ink body text (>16:1 contrast) */
-  --ink-muted: #213B37;            /* high-contrast secondary text (>9.5:1 contrast, WCAG AAA) */
+  /* Brand — replace with official brand-guide values when supplied */
+  --brand-primary: #00B3A1;        /* aqua green: fills, graphics, accents only */
+  --brand-primary-strong: #00796B; /* buttons and links with white text (about 5.3:1) */
+  --brand-primary-soft: #E0F5F2;   /* tinted backgrounds */
+  --ink: #0E2A27;                  /* body text */
+  --ink-muted: #4B635F;            /* secondary text (about 6.5:1 on white) */
   --surface: #FFFFFF;
-  --surface-alt: #F2F9F7;
-  --line: #B4D5D0;                 /* well-defined card borders */
-  --warn: #9A3412;                 /* high-contrast deep amber */
-  --danger: #991B1B;               /* high-contrast crimson */
-  --info: #075985;                 /* deep sapphire */
-  --success: #005A4E;              /* verified deep emerald */
+  --surface-alt: #F4FAF9;
+  --line: #D5E6E3;
+  --warn: #B45309;  --danger: #B42318;  --info: #0B5FA5;
+  --success: #00796B;
+
+  /* Status — entry lifecycle. Each one always pairs with its own icon (8.5); never colour alone */
+  --status-pending: var(--warn);                   /* Clock */
+  --status-verified: var(--brand-primary-strong);  /* CheckCircle2 */
+  --status-rejected: var(--danger);                /* XCircle */
+  --status-cancelled: #6B7280;                     /* Ban */
+
+  /* Plastic type — one set, reused in badges, icons and every chart */
+  --type-pet-small: var(--brand-primary-strong);
+  --type-pet-medium: #2D6FA6;
+  --type-pet-large: #A65A2E;
+  --type-rigid-other: #6B4C8A;
+
+  /* Tier — decorative/informational only. Never used for a clickable action */
+  --tier-bronze: #A9673A;
+  --tier-silver: #8A94A6;
+  --tier-gold: #C79A3D;
+  --tier-platinum: #7C8CA8;
+
+  /* Redesigned 5-Step Lifecycle Flow:
+     Teal (entry) -> Amber (pending) -> Blue (verification) -> Green (points) -> Purple (certificates) */
+  --flow-entry: var(--brand-primary-strong);
+  --flow-pending: var(--status-pending);
+  --flow-verify: var(--info);
+  --flow-points: var(--status-verified);
+  --flow-cert: #6B4C8A;
+
+  /* Type scale — Manrope for UI, Fraunces (serif) only on certificates */
+  --font-display: 2.5rem;  --lh-display: 1.1;   --ls-display: -0.01em;  /* marketing hero only */
+  --font-h1: 2rem;         --lh-h1: 1.2;        --ls-h1: -0.01em;
+  --font-h2: 1.5rem;       --lh-h2: 1.25;       --ls-h2: -0.005em;
+  --font-h3: 1.125rem;     --lh-h3: 1.35;
+  --font-body: 1rem;       --lh-body: 1.5;
+  --font-small: 0.875rem;  --lh-small: 1.4;     --ls-small: 0.01em;
+  --font-label: 0.75rem;   --lh-label: 1.3;     --ls-label: 0.02em;     /* tags, chips — sentence case, never all-caps */
+
+  /* Spacing — 4px grid. No arbitrary padding/margin/gap values outside this list */
+  --space-1: 4px; --space-2: 8px; --space-3: 12px; --space-4: 16px;
+  --space-6: 24px; --space-8: 32px; --space-12: 48px; --space-16: 64px;
 
   --radius-sm: 8px;
   --radius-md: 12px;
   --radius-lg: 16px;
   --radius-full: 9999px;
 
-  --shadow-soft: 0 4px 20px -2px rgba(6, 25, 23, 0.08);
+  --shadow-soft: 0 4px 20px -2px rgba(14, 42, 39, 0.08);
 }
 
 @theme {
@@ -35,6 +73,28 @@
   --color-danger: var(--danger);
   --color-info: var(--info);
   --color-success: var(--success);
+
+  --color-status-pending: var(--status-pending);
+  --color-status-verified: var(--status-verified);
+  --color-status-rejected: var(--status-rejected);
+  --color-status-cancelled: var(--status-cancelled);
+
+  --color-type-pet-small: var(--type-pet-small);
+  --color-type-pet-medium: var(--type-pet-medium);
+  --color-type-pet-large: var(--type-pet-large);
+  --color-type-rigid-other: var(--type-rigid-other);
+
+  --color-tier-bronze: var(--tier-bronze);
+  --color-tier-silver: var(--tier-silver);
+  --color-tier-gold: var(--tier-gold);
+  --color-tier-platinum: var(--tier-platinum);
+
+  --color-flow-entry: var(--flow-entry);
+  --color-flow-pending: var(--flow-pending);
+  --color-flow-verify: var(--flow-verify);
+  --color-flow-points: var(--flow-points);
+  --color-flow-cert: var(--flow-cert);
+
   --font-sans: var(--font-manrope), ui-sans-serif, system-ui, sans-serif;
   --font-serif: var(--font-fraunces), ui-serif, Georgia, serif;
 }

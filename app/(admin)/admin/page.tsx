@@ -4,7 +4,7 @@ import React, { useState, useEffect } from 'react';
 import Link from 'next/link';
 import { createClient } from '@/lib/supabase/client';
 import {
-  Scale,
+  Recycle,
   Package,
   Users,
   Award,
@@ -14,6 +14,7 @@ import {
   FileBarChart2,
   DollarSign,
   CheckCircle2,
+  Scale,
 } from 'lucide-react';
 
 interface BinDueItem {
@@ -131,7 +132,7 @@ export default function AdminDashboardPage() {
       title: 'Verified Plastic',
       value: `${statsData.verifiedKg} kg`,
       sub: 'Physical scale verified',
-      icon: Scale,
+      icon: Recycle,
       color: 'text-brand-primary-strong',
       bg: 'bg-brand-primary-soft',
     },
@@ -254,7 +255,10 @@ export default function AdminDashboardPage() {
               </thead>
               <tbody className="divide-y divide-line/50">
                 {binsDue.map((bin) => (
-                  <tr key={bin.id} className="hover:bg-surface-alt/40 transition-colors">
+                  <tr
+                    key={bin.id}
+                    className="hover:bg-surface-alt hover:border-l-4 hover:border-l-brand-primary-strong transition-all cursor-pointer"
+                  >
                     <td className="py-3 px-4 font-bold text-ink">{bin.name}</td>
                     <td className="py-3 px-4 font-mono text-xs font-bold text-brand-primary-strong">
                       {bin.code}

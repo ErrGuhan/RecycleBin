@@ -7,7 +7,6 @@ import {
   Scale,
   Award,
   Sparkles,
-  CheckCircle,
   HelpCircle,
   Recycle,
 } from 'lucide-react';
@@ -92,10 +91,15 @@ export default function LandingPage() {
           </div>
 
           <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
-            {/* Step 1 */}
+            {/* Step 1: Drop (Recycle) */}
             <div className="bg-surface rounded-xl p-6 border border-line shadow-xs relative">
-              <div className="w-10 h-10 rounded-full bg-brand-primary-soft text-brand-primary-strong font-extrabold flex items-center justify-center text-base mb-4">
-                1
+              <div className="flex items-center justify-between mb-4">
+                <div className="w-10 h-10 rounded-full bg-brand-primary-soft text-brand-primary-strong font-extrabold flex items-center justify-center text-base">
+                  1
+                </div>
+                <div className="w-9 h-9 rounded-lg bg-surface-alt flex items-center justify-center text-brand-primary-strong">
+                  <Recycle className="w-5 h-5" />
+                </div>
               </div>
               <h3 className="font-bold text-base text-ink mb-2">Drop Clean Plastic</h3>
               <p className="text-sm text-ink-muted leading-relaxed">
@@ -106,10 +110,15 @@ export default function LandingPage() {
               </div>
             </div>
 
-            {/* Step 2 */}
+            {/* Step 2: Scan (ScanQrCode) */}
             <div className="bg-surface rounded-xl p-6 border border-line shadow-xs relative">
-              <div className="w-10 h-10 rounded-full bg-brand-primary-soft text-brand-primary-strong font-extrabold flex items-center justify-center text-base mb-4">
-                2
+              <div className="flex items-center justify-between mb-4">
+                <div className="w-10 h-10 rounded-full bg-brand-primary-soft text-brand-primary-strong font-extrabold flex items-center justify-center text-base">
+                  2
+                </div>
+                <div className="w-9 h-9 rounded-lg bg-surface-alt flex items-center justify-center text-brand-primary-strong">
+                  <QrCode className="w-5 h-5" />
+                </div>
               </div>
               <h3 className="font-bold text-base text-ink mb-2">Scan & Sign In</h3>
               <p className="text-sm text-ink-muted leading-relaxed">
@@ -120,10 +129,19 @@ export default function LandingPage() {
               </div>
             </div>
 
-            {/* Step 3 */}
+            {/* Step 3: Count & Earn (Plus/Minus) */}
             <div className="bg-surface rounded-xl p-6 border border-line shadow-xs relative">
-              <div className="w-10 h-10 rounded-full bg-brand-primary-soft text-brand-primary-strong font-extrabold flex items-center justify-center text-base mb-4">
-                3
+              <div className="flex items-center justify-between mb-4">
+                <div className="w-10 h-10 rounded-full bg-brand-primary-soft text-brand-primary-strong font-extrabold flex items-center justify-center text-base">
+                  3
+                </div>
+                <div className="w-9 h-9 rounded-lg bg-surface-alt flex items-center justify-center text-brand-primary-strong">
+                  <div className="flex items-center gap-0.5">
+                    <span className="text-sm font-black">+</span>
+                    <span className="text-sm font-black">/</span>
+                    <span className="text-sm font-black">-</span>
+                  </div>
+                </div>
               </div>
               <h3 className="font-bold text-base text-ink mb-2">Count & Earn</h3>
               <p className="text-sm text-ink-muted leading-relaxed">
@@ -131,6 +149,53 @@ export default function LandingPage() {
               </p>
               <div className="mt-4 pt-4 border-t border-line/60 text-xs text-brand-primary-strong font-medium">
                 Points unlock verifiable tiers
+              </div>
+            </div>
+          </div>
+
+          {/* 5-Step Lifecycle Flow Architecture */}
+          <div className="mt-12 pt-10 border-t border-line">
+            <div className="text-center mb-6">
+              <span className="text-xs uppercase font-bold tracking-wider text-ink-muted">
+                Complete End-to-End Cycle
+              </span>
+              <h3 className="text-lg font-bold text-ink mt-1">From Bin Drop to Verified Certificate</h3>
+            </div>
+
+            <div className="grid grid-cols-1 sm:grid-cols-5 gap-3 max-w-4xl mx-auto">
+              {/* 1. Teal Entry */}
+              <div className="p-4 rounded-xl bg-[#00796B] text-white flex flex-col items-center text-center shadow-xs">
+                <span className="text-xs font-bold opacity-80 mb-1">01 • ENTRY</span>
+                <span className="text-sm font-bold leading-tight">Scan the bin&apos;s QR</span>
+                <span className="text-[11px] opacity-90 mt-1">Sign in once</span>
+              </div>
+
+              {/* 2. Amber Pending */}
+              <div className="p-4 rounded-xl bg-[#B45309] text-white flex flex-col items-center text-center shadow-xs">
+                <span className="text-xs font-bold opacity-80 mb-1">02 • PENDING</span>
+                <span className="text-sm font-bold leading-tight">Log how many items</span>
+                <span className="text-[11px] opacity-90 mt-1">Saved as pending</span>
+              </div>
+
+              {/* 3. Blue Verify */}
+              <div className="p-4 rounded-xl bg-[#0B5FA5] text-white flex flex-col items-center text-center shadow-xs">
+                <span className="text-xs font-bold opacity-80 mb-1">03 • WEIGHING</span>
+                <span className="text-sm font-bold leading-tight">Admin weighs the bin</span>
+                <span className="text-[11px] opacity-90 mt-1">Checked against count</span>
+              </div>
+
+              {/* 4. Green Points */}
+              <div className="p-4 rounded-xl bg-[#005A4E] text-white flex flex-col items-center text-center shadow-xs">
+                <span className="text-xs font-bold opacity-80 mb-1">04 • POINTS</span>
+                <span className="text-sm font-bold leading-tight">Points added</span>
+                <span className="text-[11px] opacity-90 mt-1">Credited to student</span>
+              </div>
+
+              {/* 5. Purple Certificate */}
+              <div className="p-4 rounded-xl bg-[#6B4C8A] text-white flex flex-col items-center text-center shadow-xs">
+                <span className="text-xs font-bold opacity-80 mb-1">05 • REWARDS</span>
+                <span className="text-sm font-bold leading-tight">Certificate issued</span>
+                <span className="text-[11px] opacity-90 mt-1">At each points tier</span>
               </div>
             </div>
           </div>
@@ -239,7 +304,7 @@ export default function LandingPage() {
                 className="bg-surface rounded-xl p-5 border border-line shadow-xs space-y-2"
               >
                 <h3 className="font-bold text-sm text-ink flex items-start gap-2">
-                  <CheckCircle className="w-4 h-4 text-brand-primary-strong shrink-0 mt-0.5" />
+                  <HelpCircle className="w-4 h-4 text-brand-primary-strong shrink-0 mt-0.5" />
                   <span>{item.q}</span>
                 </h3>
                 <p className="text-xs sm:text-sm text-ink-muted leading-relaxed pl-6">

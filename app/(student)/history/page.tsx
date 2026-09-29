@@ -6,6 +6,7 @@ import { PlasticCategoryIcon } from '@/components/plastic/PlasticCategoryIcon';
 import { StatusBadge, EntryStatus } from '@/components/ui/StatusBadge';
 import { createClient } from '@/lib/supabase/client';
 import { Clock, CheckCircle2, QrCode, Inbox } from 'lucide-react';
+import { getMessages } from '@/lib/messages';
 
 interface HistoryItem {
   id: string;
@@ -174,23 +175,34 @@ export default function StudentHistoryPage() {
         </button>
       </div>
 
-      {/* History Items List */}
+      {/* History Items List with Skeleton Shimmer (BUILD_PROMPT.md §8.7) */}
       {isLoading ? (
-        <div className="py-12 text-center text-xs text-ink-muted space-y-2">
-          <div className="w-6 h-6 rounded-full border-2 border-brand-primary-strong border-t-transparent animate-spin mx-auto" />
-          <p>Loading your history...</p>
+        <div className="space-y-2.5">
+          {[1, 2, 3].map((n) => (
+            <div
+              key={n}
+              className="bg-surface rounded-2xl border border-line p-3.5 shadow-xs flex items-center justify-between gap-3 animate-pulse"
+            >
+              <div className="flex items-center gap-3">
+                <div className="w-10 h-10 rounded-2xl bg-surface-alt shrink-0" />
+                <div className="space-y-1.5">
+                  <div className="h-3.5 w-32 bg-surface-alt rounded-md" />
+                  <div className="h-2.5 w-24 bg-surface-alt rounded-md" />
+                </div>
+              </div>
+              <div className="h-6 w-20 bg-surface-alt rounded-full" />
+            </div>
+          ))}
         </div>
       ) : filtered.length === 0 ? (
+        /* Empty state: 1 icon + 1 short line per §8.6 #7 and exact §9 copy */
         <div className="bg-surface rounded-2xl border border-line p-8 text-center space-y-3">
           <div className="w-12 h-12 rounded-2xl bg-surface-alt border border-line text-brand-primary-strong mx-auto flex items-center justify-center">
             <Inbox className="w-6 h-6 stroke-[1.5]" />
           </div>
           <div className="space-y-1">
-            <h3 className="text-sm font-bold text-ink">No Drops Found</h3>
-            <p className="text-xs text-ink-muted max-w-xs mx-auto">
-              {filter === 'all'
-                ? 'You have not recorded any recycling drops yet.'
-                : `No ${filter} drops recorded.`}
+            <p className="text-xs text-ink-muted">
+              {getMessages().messages.empty_history}
             </p>
           </div>
           <Link

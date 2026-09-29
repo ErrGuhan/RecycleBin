@@ -14,6 +14,7 @@ import {
   ChevronDown,
   ChevronUp,
 } from 'lucide-react';
+import { TierEmblem } from '@/components/ui/TierEmblem';
 
 interface AdminCertificate {
   id: string;
@@ -169,7 +170,7 @@ export default function AdminCertificatesPage() {
         </div>
 
         <div className="bg-surface rounded-2xl border border-line p-4 shadow-xs">
-          <div className="flex items-center gap-1.5 text-xs font-bold text-emerald-800 mb-1">
+          <div className="flex items-center gap-1.5 text-xs font-bold text-status-verified mb-1">
             <CheckCircle2 className="w-4 h-4" />
             <span>Active &amp; Valid</span>
           </div>
@@ -177,7 +178,7 @@ export default function AdminCertificatesPage() {
         </div>
 
         <div className="bg-surface rounded-2xl border border-line p-4 shadow-xs">
-          <div className="flex items-center gap-1.5 text-xs font-bold text-rose-800 mb-1">
+          <div className="flex items-center gap-1.5 text-xs font-bold text-status-rejected mb-1">
             <Ban className="w-4 h-4" />
             <span>Revoked</span>
           </div>
@@ -209,8 +210,8 @@ export default function AdminCertificatesPage() {
               key={cert.id}
               className={`bg-surface rounded-2xl border p-5 shadow-xs transition-all ${
                 cert.status === 'revoked'
-                  ? 'border-rose-300 bg-rose-50/20 opacity-80'
-                  : 'border-line hover:border-brand-primary-strong/40'
+                  ? 'border-status-rejected/30 bg-status-rejected-bg/30 opacity-85'
+                  : 'border-line hover:border-brand-primary-strong/40 hover:border-l-3 hover:border-l-brand-primary-strong'
               }`}
             >
               <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
@@ -218,7 +219,7 @@ export default function AdminCertificatesPage() {
                   <div
                     className={`w-12 h-12 rounded-2xl flex items-center justify-center shrink-0 ${
                       cert.status === 'revoked'
-                        ? 'bg-rose-100 text-rose-800'
+                        ? 'bg-status-rejected-bg text-status-rejected'
                         : 'bg-brand-primary-soft text-brand-primary-strong'
                     }`}
                   >
@@ -237,8 +238,8 @@ export default function AdminCertificatesPage() {
                       <span
                         className={`text-[10px] font-black uppercase tracking-wider px-2 py-0.5 rounded-full ${
                           cert.status === 'active'
-                            ? 'bg-emerald-100 text-emerald-800'
-                            : 'bg-rose-100 text-rose-800'
+                            ? 'bg-status-verified-bg text-status-verified border border-status-verified/20'
+                            : 'bg-status-rejected-bg text-status-rejected border border-status-rejected/20'
                         }`}
                       >
                         {cert.status}
@@ -246,7 +247,10 @@ export default function AdminCertificatesPage() {
                     </div>
 
                     <div className="text-xs text-ink-muted mt-1 flex flex-wrap items-center gap-2">
-                      <span className="font-bold text-brand-primary-strong">{cert.tier} Tier</span>
+                      <span className="inline-flex items-center gap-1 font-bold text-brand-primary-strong">
+                        <TierEmblem tier={cert.tier} size={14} />
+                        <span>{cert.tier} Tier</span>
+                      </span>
                       <span>•</span>
                       <span>{cert.itemsCount} Items</span>
                       <span>•</span>
@@ -262,7 +266,7 @@ export default function AdminCertificatesPage() {
                   <Link
                     href={`/verify/${cert.certificateNo}`}
                     target="_blank"
-                    className="inline-flex items-center gap-1.5 px-3 py-2 rounded-xl border border-line bg-surface hover:bg-surface-alt text-ink font-bold text-xs shadow-xs"
+                    className="inline-flex items-center gap-1.5 px-3 py-2.5 min-h-[44px] rounded-xl border border-line bg-surface hover:bg-surface-alt text-ink font-bold text-xs shadow-xs"
                   >
                     <ExternalLink className="w-3.5 h-3.5" />
                     <span>Verify</span>
@@ -272,7 +276,7 @@ export default function AdminCertificatesPage() {
                     href={`/api/pdf/certificate/${cert.certificateNo}`}
                     target="_blank"
                     rel="noopener noreferrer"
-                    className="inline-flex items-center gap-1.5 px-3.5 py-2 rounded-xl bg-brand-primary-strong text-white font-bold text-xs shadow-xs hover:opacity-95"
+                    className="inline-flex items-center gap-1.5 px-3.5 py-2.5 min-h-[44px] rounded-xl bg-brand-primary-strong text-white font-bold text-xs shadow-xs hover:opacity-95"
                   >
                     <Download className="w-3.5 h-3.5" />
                     <span>PDF</span>
@@ -282,7 +286,7 @@ export default function AdminCertificatesPage() {
                     <button
                       type="button"
                       onClick={() => setSelectedToRevoke(cert)}
-                      className="p-2 min-h-[38px] min-w-[38px] rounded-xl border border-rose-200 bg-rose-50 text-rose-800 hover:bg-rose-100 font-semibold flex items-center justify-center"
+                      className="p-2.5 min-h-[44px] min-w-[44px] rounded-xl border border-status-rejected/30 bg-status-rejected-bg text-status-rejected hover:bg-status-rejected-bg/80 font-semibold flex items-center justify-center"
                       title="Revoke Certificate"
                     >
                       <Ban className="w-4 h-4" />

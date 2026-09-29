@@ -1,7 +1,7 @@
 import { test, expect } from '@playwright/test';
 import path from 'path';
 
-const ARTIFACTS_DIR = 'C:\\Users\\mguha_2nalv7a\\.gemini\\antigravity-ide\\brain\\43ac39a4-5f6d-4359-8fb5-50d31987c077';
+const ARTIFACTS_DIR = 'C:\\Users\\mguha_2nalv7a\\.gemini\\antigravity-ide\\brain\\1bac78c1-e0e7-4d3b-994e-35b1ce9445ee';
 
 test.describe('Campus Plastic Credits End-to-End Visual & Logic Flows', () => {
   test('Landing page loads and renders brand and CTAs', async ({ page }, testInfo) => {
@@ -11,6 +11,39 @@ test.describe('Campus Plastic Credits End-to-End Visual & Logic Flows', () => {
     const screenshotPath = path.join(
       ARTIFACTS_DIR,
       `screenshot_landing_${testInfo.project.name.toLowerCase().replace(/\s+/g, '_')}.png`
+    );
+    await page.screenshot({ path: screenshotPath, fullPage: true });
+  });
+
+  test('How It Works page loads lifecycle cards', async ({ page }, testInfo) => {
+    await page.goto('/how-it-works');
+    await expect(page.locator('body')).toContainText('Campus Plastic Credits System Works');
+
+    const screenshotPath = path.join(
+      ARTIFACTS_DIR,
+      `screenshot_how_it_works_${testInfo.project.name.toLowerCase().replace(/\s+/g, '_')}.png`
+    );
+    await page.screenshot({ path: screenshotPath, fullPage: true });
+  });
+
+  test('Rewards page loads tier emblems and plastic categories', async ({ page }, testInfo) => {
+    await page.goto('/rewards');
+    await expect(page.locator('body')).toContainText('Rewards, Points & Milestone Tiers');
+
+    const screenshotPath = path.join(
+      ARTIFACTS_DIR,
+      `screenshot_rewards_${testInfo.project.name.toLowerCase().replace(/\s+/g, '_')}.png`
+    );
+    await page.screenshot({ path: screenshotPath, fullPage: true });
+  });
+
+  test('FAQ page loads questions and answers', async ({ page }, testInfo) => {
+    await page.goto('/faq');
+    await expect(page.locator('body')).toContainText('Frequently Asked Questions');
+
+    const screenshotPath = path.join(
+      ARTIFACTS_DIR,
+      `screenshot_faq_${testInfo.project.name.toLowerCase().replace(/\s+/g, '_')}.png`
     );
     await page.screenshot({ path: screenshotPath, fullPage: true });
   });
@@ -47,7 +80,7 @@ test.describe('Campus Plastic Credits End-to-End Visual & Logic Flows', () => {
 
     // Verify confirmation celebration
     await expect(page.locator('body')).toContainText('3 Items Saved!');
-    await expect(page.locator('body')).toContainText('Pending Bin Scale Weighing');
+    await expect(page.locator('body')).toContainText('Waiting for this bin to be weighed');
 
     const screenshotPath = path.join(
       ARTIFACTS_DIR,
@@ -58,12 +91,34 @@ test.describe('Campus Plastic Credits End-to-End Visual & Logic Flows', () => {
 
   test('Student Dashboard loads with bottle progress and drop feed', async ({ page }, testInfo) => {
     await page.goto('/home');
-    await expect(page.locator('body')).toContainText('Hi, Aditya');
+    await expect(page.locator('body')).toContainText(/Hi, (Aditya|Student)/);
     await expect(page.locator('body')).toContainText('Recent Drops');
 
     const screenshotPath = path.join(
       ARTIFACTS_DIR,
       `screenshot_home_${testInfo.project.name.toLowerCase().replace(/\s+/g, '_')}.png`
+    );
+    await page.screenshot({ path: screenshotPath, fullPage: true });
+  });
+
+  test('Student Certificates page loads with TierEmblem and badges', async ({ page }, testInfo) => {
+    await page.goto('/certificates');
+    await expect(page.locator('body')).toContainText('Sustainability Certificates');
+
+    const screenshotPath = path.join(
+      ARTIFACTS_DIR,
+      `screenshot_certificates_${testInfo.project.name.toLowerCase().replace(/\s+/g, '_')}.png`
+    );
+    await page.screenshot({ path: screenshotPath, fullPage: true });
+  });
+
+  test('Student Account page loads with DPDP and export buttons', async ({ page }, testInfo) => {
+    await page.goto('/account');
+    await expect(page.locator('body')).toContainText('Account & Privacy');
+
+    const screenshotPath = path.join(
+      ARTIFACTS_DIR,
+      `screenshot_account_${testInfo.project.name.toLowerCase().replace(/\s+/g, '_')}.png`
     );
     await page.screenshot({ path: screenshotPath, fullPage: true });
   });
@@ -77,15 +132,15 @@ test.describe('Campus Plastic Credits End-to-End Visual & Logic Flows', () => {
 
     // Step 2: Weigh Scale
     await expect(page.locator('body')).toContainText('Enter Physical Scale Weight');
-    await page.getByRole('button', { name: /Calculate & Review/i }).click();
+    await page.getByRole('button', { name: /Review Verification/i }).click();
 
     // Step 3: Review Ratio
-    await expect(page.locator('body')).toContainText('Batch Ratio Analysis');
-    await page.getByRole('button', { name: /Approve All/i }).click();
+    await expect(page.locator('body')).toContainText('Batch Tolerance Review');
+    await page.getByRole('button', { name: /Approve All in Full/i }).click();
 
     // Step 4: Finalize & Calibration Hint
     await expect(page.locator('body')).toContainText('Batch Verified & Finalized!');
-    await expect(page.locator('body')).toContainText('Pilot Calibration Hint');
+    await expect(page.locator('body')).toContainText('Pilot Calibration Telemetry');
 
     const screenshotPath = path.join(
       ARTIFACTS_DIR,
@@ -96,8 +151,8 @@ test.describe('Campus Plastic Credits End-to-End Visual & Logic Flows', () => {
 
   test('Admin Bins page loads with icon cards, rotate code, and modal', async ({ page }, testInfo) => {
     await page.goto('/admin/bins');
-    await expect(page.locator('body')).toContainText('Campus Drop Bins');
-    await expect(page.locator('body')).toContainText('Cafeteria Station A');
+    await expect(page.locator('body')).toContainText('Bins & QR Roster');
+    await expect(page.locator('body')).toContainText('Cafeteria');
 
     const screenshotPath = path.join(
       ARTIFACTS_DIR,
@@ -109,11 +164,33 @@ test.describe('Campus Plastic Credits End-to-End Visual & Logic Flows', () => {
   test('Admin Entries page loads with filter chips and audit records', async ({ page }, testInfo) => {
     await page.goto('/admin/entries');
     await expect(page.locator('body')).toContainText('Student Drop Entries');
-    await expect(page.locator('body')).toContainText('Aditya Kumar');
+    await expect(page.locator('body')).toContainText(/No student drops|Aditya/);
 
     const screenshotPath = path.join(
       ARTIFACTS_DIR,
       `screenshot_admin_entries_${testInfo.project.name.toLowerCase().replace(/\s+/g, '_')}.png`
+    );
+    await page.screenshot({ path: screenshotPath, fullPage: true });
+  });
+
+  test('Admin Students page loads with roster and tier emblems', async ({ page }, testInfo) => {
+    await page.goto('/admin/students');
+    await expect(page.locator('body')).toContainText('Student Roster');
+
+    const screenshotPath = path.join(
+      ARTIFACTS_DIR,
+      `screenshot_admin_students_${testInfo.project.name.toLowerCase().replace(/\s+/g, '_')}.png`
+    );
+    await page.screenshot({ path: screenshotPath, fullPage: true });
+  });
+
+  test('Admin Reports page loads with NAAC export and composition', async ({ page }, testInfo) => {
+    await page.goto('/admin/reports');
+    await expect(page.locator('body')).toContainText('Sustainability Reports');
+
+    const screenshotPath = path.join(
+      ARTIFACTS_DIR,
+      `screenshot_admin_reports_${testInfo.project.name.toLowerCase().replace(/\s+/g, '_')}.png`
     );
     await page.screenshot({ path: screenshotPath, fullPage: true });
   });

@@ -50,18 +50,16 @@ export default function AdminSettingsPage() {
 
   return (
     <div className="space-y-6">
-      {/* Banner */}
+      {/* Toast Notification */}
       {notification && (
-        <div className="p-4 rounded-xl bg-emerald-50 border border-emerald-200 text-emerald-900 text-sm font-semibold flex items-center justify-between shadow-xs">
-          <div className="flex items-center gap-2">
-            <CheckCircle2 className="w-4 h-4 text-emerald-700 shrink-0" />
-            <span>{notification}</span>
-          </div>
+        <div className="fixed top-5 right-5 z-50 p-4 rounded-2xl bg-brand-primary-strong text-white font-bold text-xs shadow-lg flex items-center gap-2 animate-in fade-in slide-in-from-top-2">
+          <CheckCircle2 className="w-4 h-4 shrink-0" />
+          <span>{notification}</span>
           <button
             onClick={() => setNotification(null)}
-            className="text-emerald-700 hover:text-emerald-900"
+            className="ml-2 hover:opacity-80 p-0.5"
           >
-            <X className="w-4 h-4" />
+            <X className="w-3.5 h-3.5" />
           </button>
         </div>
       )}
@@ -85,7 +83,7 @@ export default function AdminSettingsPage() {
         <button
           type="button"
           onClick={handleSave}
-          className="inline-flex items-center gap-1.5 px-4 py-2 rounded-xl bg-brand-primary-strong text-white font-bold text-xs shadow-xs hover:opacity-95"
+          className="inline-flex items-center gap-1.5 px-4 py-2.5 min-h-[44px] rounded-xl bg-brand-primary-strong text-white font-bold text-xs shadow-xs hover:opacity-95"
         >
           <Save className="w-4 h-4" />
           <span>Save Changes</span>
